@@ -12,7 +12,7 @@ import java.util.Calendar
 class AlarmScheduler(private val context: Context) {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    fun schedule(alarm: Alarm) {
+    fun schedule(alarm: Alarm, fromReceiver: Boolean = false) {
         if (!alarm.isActive) {
             cancel()
             return
@@ -34,9 +34,32 @@ class AlarmScheduler(private val context: Context) {
             set(Calendar.MILLISECOND, 0)
         }
 
-        // If the alarm time has already passed today, schedule it for tomorrow
-        if (calendar.timeInMillis <= System.currentTimeMillis()) {
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
+        val nowTime = System.currentTimeMillis()
+        if (alarm.daysOfWeek.isNotEmpty()) {
+            val startOffset = if (fromReceiver) 1 else 0
+            var found = false
+            for (offset in startOffset..7) {
+                val testCalendar = (calendar.clone() as Calendar).apply {
+                    add(Calendar.DAY_OF_YEAR, offset)
+                }
+                val testDayOfWeek = testCalendar.get(Calendar.DAY_OF_WEEK)
+                if (alarm.daysOfWeek.contains(testDayOfWeek)) {
+                    if (offset > 0 || testCalendar.timeInMillis > nowTime) {
+                        calendar.timeInMillis = testCalendar.timeInMillis
+                        found = true
+                        break
+                    }
+                }
+            }
+            if (!found) {
+                if (calendar.timeInMillis <= nowTime) {
+                    calendar.add(Calendar.DAY_OF_YEAR, 1)
+                }
+            }
+        } else {
+            if (calendar.timeInMillis <= nowTime) {
+                calendar.add(Calendar.DAY_OF_YEAR, 1)
+            }
         }
 
         try {

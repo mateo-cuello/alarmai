@@ -11,6 +11,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_ALARM_HOUR = "alarm_hour"
         private const val KEY_ALARM_MINUTE = "alarm_minute"
         private const val KEY_ALARM_ACTIVE = "alarm_active"
+        private const val KEY_ALARM_DAYS_OF_WEEK = "alarm_days_of_week"
         private const val KEY_GEMINI_KEY = "gemini_key"
         private const val KEY_NEWS_KEY = "news_key"
         private const val KEY_NEWS_TOPICS = "news_topics"
@@ -19,10 +20,12 @@ class PreferencesManager(context: Context) {
     }
 
     fun saveAlarm(alarm: Alarm) {
+        val daysString = alarm.daysOfWeek.joinToString(",")
         prefs.edit()
             .putInt(KEY_ALARM_HOUR, alarm.hour)
             .putInt(KEY_ALARM_MINUTE, alarm.minute)
             .putBoolean(KEY_ALARM_ACTIVE, alarm.isActive)
+            .putString(KEY_ALARM_DAYS_OF_WEEK, daysString)
             .apply()
     }
 
@@ -30,7 +33,15 @@ class PreferencesManager(context: Context) {
         val hour = prefs.getInt(KEY_ALARM_HOUR, 7)
         val minute = prefs.getInt(KEY_ALARM_MINUTE, 0)
         val active = prefs.getBoolean(KEY_ALARM_ACTIVE, false)
-        return Alarm(hour, minute, active)
+        val daysString = prefs.getString(KEY_ALARM_DAYS_OF_WEEK, "") ?: ""
+        val daysOfWeek = if (daysString.isEmpty()) {
+            emptySet()
+        } else {
+            daysString.split(",")
+                .mapNotNull { it.toIntOrNull() }
+                .toSet()
+        }
+        return Alarm(hour, minute, active, daysOfWeek = daysOfWeek)
     }
 
     fun saveGeminiKey(key: String) {

@@ -26,14 +26,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateAlarmTime(hour: Int, minute: Int) {
         val current = _alarm.value
-        val updated = Alarm(hour, minute, current.isActive)
+        val updated = current.copy(hour = hour, minute = minute)
         saveAndReschedule(updated)
     }
 
     fun toggleAlarmActive(isActive: Boolean) {
         val current = _alarm.value
-        val updated = Alarm(current.hour, current.minute, isActive)
+        val updated = current.copy(isActive = isActive)
         saveAndReschedule(updated)
+    }
+
+    fun toggleAlarmDay(day: Int) {
+        val current = _alarm.value
+        val newDays = if (current.daysOfWeek.contains(day)) {
+            current.daysOfWeek - day
+        } else {
+            current.daysOfWeek + day
+        }
+        val updated = current.copy(daysOfWeek = newDays)
+        saveAndReschedule(updated)
+    }
+
+    fun reloadAlarm() {
+        _alarm.value = prefs.getAlarm()
     }
 
     private fun saveAndReschedule(updatedAlarm: Alarm) {

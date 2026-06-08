@@ -4,7 +4,7 @@
             "outputFile": "com.mateocuello.alarmai.app-mergeDebugResources-55:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\usuario\\.gradle\\caches\\transforms-3\\a6647806adbc7ef456422a5bf902b85c\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
+                    "source": "C:\\Users\\usuario\\.gradle\\caches\\8.13\\transforms\\0311e548701e11653a37fa06d5e8bf18\\transformed\\core-1.12.0\\res\\values-v16\\values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

@@ -65,6 +65,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.reloadAlarm()
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -219,7 +224,53 @@ fun MainScreen(viewModel: MainViewModel) {
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Days of Week Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val daysList = listOf(
+                        java.util.Calendar.MONDAY to "M",
+                        java.util.Calendar.TUESDAY to "T",
+                        java.util.Calendar.WEDNESDAY to "W",
+                        java.util.Calendar.THURSDAY to "T",
+                        java.util.Calendar.FRIDAY to "F",
+                        java.util.Calendar.SATURDAY to "S",
+                        java.util.Calendar.SUNDAY to "S"
+                    )
+
+                    daysList.forEach { (dayInt, label) ->
+                        val isSelected = alarm.daysOfWeek.contains(dayInt)
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    color = if (isSelected) PrimaryPurple else Color.White.copy(alpha = 0.05f),
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isSelected) SecondaryPink else Color.White.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .clickable {
+                                    viewModel.toggleAlarmDay(dayInt)
+                                }
+                        ) {
+                            Text(
+                                text = label,
+                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = if (alarm.isActive) "Alarm is scheduled" else "Alarm is disabled",
