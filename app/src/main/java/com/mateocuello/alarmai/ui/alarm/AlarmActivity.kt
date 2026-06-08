@@ -204,7 +204,7 @@ fun RingingLayout(onDismiss: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(150dp)
+                .size(150.dp)
                 .scale(scale)
                 .background(PrimaryPurple.copy(alpha = 0.2f), shape = CircleShape)
                 .border(2.dp, PrimaryPurple, CircleShape),
@@ -298,7 +298,7 @@ fun SpeakingLayout(speech: String) {
     ) {
         Box(
             modifier = Modifier
-                .size(100dp)
+                .size(100.dp)
                 .scale(scale)
                 .background(SecondaryPink.copy(alpha = 0.2f), shape = CircleShape)
                 .border(2.dp, SecondaryPink, CircleShape),
@@ -351,7 +351,7 @@ fun ListeningLayout(userSpeech: String) {
     ) {
         Box(
             modifier = Modifier
-                .size(100dp)
+                .size(100.dp)
                 .background(Color.White.copy(alpha = 0.05f), shape = CircleShape)
                 .border(2.dp, Color(0xFF06B6D4).copy(alpha = borderAlpha), CircleShape),
             contentAlignment = Alignment.Center
