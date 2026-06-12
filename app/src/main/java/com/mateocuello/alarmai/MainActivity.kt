@@ -659,8 +659,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val models = listOf(
-                        "gemini-3.5-flash" to "Gemini 3.5 Flash",
-                        "gemini-3.1-flash-lite" to "Gemini 3.1 Flash"
+                        "gemini-2.5-flash" to "Gemini 2.5 Flash"
                     )
                     models.forEach { (modelId, displayName) ->
                         val isSelected = geminiModel == modelId

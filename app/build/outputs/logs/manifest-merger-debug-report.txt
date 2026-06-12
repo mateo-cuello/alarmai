@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-90:12
-INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-90:12
-INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-90:12
-INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-90:12
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-91:12
+INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-91:12
+INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-91:12
+INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-91:12
 MERGED from [com.google.ai.client.generativeai:generativeai:0.9.0] C:\Users\usuario\.gradle\caches\8.13\transforms\1068c8fdd85606b7f9e558245b8a000e\transformed\generativeai-0.9.0\AndroidManifest.xml:17:1-24:12
 MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\usuario\.gradle\caches\8.13\transforms\b7a2be5b67442844fca5e3671d4594cc\transformed\play-services-location-21.2.0\AndroidManifest.xml:2:1-9:12
 MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\a78c36a0c70fd190296d2b871d444f17\transformed\play-services-base-18.3.0\AndroidManifest.xml:16:1-24:12
@@ -95,55 +95,59 @@ MERGED from [com.google.ai.client.generativeai:common:0.8.0] C:\Users\usuario\.g
 MERGED from [com.google.ai.client.generativeai:common:0.8.0] C:\Users\usuario\.gradle\caches\8.13\transforms\e58763fa7885dc60cc14df2f0d7da017\transformed\common-0.8.0\AndroidManifest.xml:22:5-67
 	android:name
 		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:12:22-64
+uses-permission#android.permission.MODIFY_AUDIO_SETTINGS
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:13:5-80
+	android:name
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:13:22-77
 uses-permission#android.permission.SCHEDULE_EXACT_ALARM
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:13:5-106
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:5-106
 	android:maxSdkVersion
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:13:77-103
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:77-103
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:13:22-76
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:22-76
 uses-permission#android.permission.USE_EXACT_ALARM
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:5-74
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:15:5-74
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:22-71
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:15:22-71
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:15:5-77
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:16:5-77
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:15:22-74
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:16:22-74
 uses-permission#android.permission.READ_CALENDAR
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:16:5-72
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:17:5-72
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:16:22-69
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:17:22-69
 uses-permission#android.permission.RECORD_AUDIO
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:17:5-71
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:18:5-71
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:17:22-68
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:18:22-68
 uses-permission#android.permission.ACCESS_FINE_LOCATION
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:18:5-79
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:19:5-79
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:18:22-76
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:19:22-76
 uses-permission#android.permission.ACCESS_COARSE_LOCATION
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:19:5-81
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:20:5-81
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:19:22-78
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:20:22-78
 uses-permission#android.permission.WAKE_LOCK
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:20:5-68
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:21:5-68
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:20:22-65
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:21:22-65
 uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:21:5-77
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:22:5-77
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:21:22-74
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:22:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:22:5-92
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:23:5-92
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:22:22-89
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:23:22-89
 uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:23:5-81
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:24:5-81
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:23:22-78
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:24:22-78
 application
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:25:5-88:19
-INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:25:5-88:19
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:26:5-89:19
+INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:26:5-89:19
 MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\usuario\.gradle\caches\8.13\transforms\b7a2be5b67442844fca5e3671d4594cc\transformed\play-services-location-21.2.0\AndroidManifest.xml:7:5-20
 MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\usuario\.gradle\caches\8.13\transforms\b7a2be5b67442844fca5e3671d4594cc\transformed\play-services-location-21.2.0\AndroidManifest.xml:7:5-20
 MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\a78c36a0c70fd190296d2b871d444f17\transformed\play-services-base-18.3.0\AndroidManifest.xml:19:5-23:19
@@ -173,103 +177,103 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\usuario\.gradle\ca
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] C:\Users\usuario\.gradle\caches\8.13\transforms\0311e548701e11653a37fa06d5e8bf18\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:32:9-35
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:33:9-35
 	android:label
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:30:9-41
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:31:9-41
 	android:fullBackupContent
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:28:9-54
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:29:9-54
 	android:roundIcon
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:31:9-54
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:32:9-54
 	tools:targetApi
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:34:9-29
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:35:9-29
 	android:icon
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:29:9-43
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:30:9-43
 	android:allowBackup
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:26:9-35
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:27:9-35
 	android:theme
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:33:9-45
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:34:9-45
 	android:dataExtractionRules
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:27:9-65
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:28:9-65
 activity#com.mateocuello.alarmai.MainActivity
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:37:9-45:20
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:38:9-46:20
 	android:exported
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:39:13-36
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:40:13-36
 	android:theme
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:40:13-49
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:41:13-49
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:38:13-41
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:39:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:41:13-44:29
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:42:13-45:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:42:17-69
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:43:17-69
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:42:25-66
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:43:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:43:17-77
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:44:17-77
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:43:27-74
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:44:27-74
 activity#com.mateocuello.alarmai.ui.alarm.AlarmActivity
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:48:9-56:63
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:49:9-57:63
 	android:turnScreenOn
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:55:13-40
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:56:13-40
 	android:excludeFromRecents
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:50:13-46
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:51:13-46
 	android:showWhenLocked
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:54:13-42
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:55:13-42
 	android:launchMode
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:52:13-48
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:53:13-48
 	android:exported
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:51:13-37
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:52:13-37
 	android:showOnLockScreen
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:53:13-44
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:54:13-44
 	android:theme
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:56:13-60
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:57:13-60
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:49:13-51
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:50:13-51
 receiver#com.mateocuello.alarmai.receiver.AlarmReceiver
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:59:9-62:40
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:60:9-63:40
 	android:enabled
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:61:13-35
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:62:13-35
 	android:exported
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:62:13-37
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:63:13-37
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:60:13-51
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:61:13-51
 receiver#com.mateocuello.alarmai.receiver.PreAlarmReceiver
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:65:9-68:40
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:66:9-69:40
 	android:enabled
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:67:13-35
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:68:13-35
 	android:exported
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:68:13-37
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:69:13-37
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:66:13-54
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:67:13-54
 receiver#com.mateocuello.alarmai.receiver.BootReceiver
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:71:9-79:20
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:72:9-80:20
 	android:enabled
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:73:13-35
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:74:13-35
 	android:exported
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:74:13-36
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:75:13-36
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:72:13-50
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:73:13-50
 intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.intent.action.LOCKED_BOOT_COMPLETED
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:75:13-78:29
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:76:13-79:29
 action#android.intent.action.BOOT_COMPLETED
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:76:17-79
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:77:17-79
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:76:25-76
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:77:25-76
 action#android.intent.action.LOCKED_BOOT_COMPLETED
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:77:17-86
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:78:17-86
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:77:25-83
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:78:25-83
 service#com.mateocuello.alarmai.service.AlarmService
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:82:9-86:61
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:83:9-87:61
 	android:enabled
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:84:13-35
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:85:13-35
 	android:exported
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:85:13-37
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:86:13-37
 	android:foregroundServiceType
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:86:13-58
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:87:13-58
 	android:name
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:83:13-49
+		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:84:13-49
 uses-sdk
 INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml

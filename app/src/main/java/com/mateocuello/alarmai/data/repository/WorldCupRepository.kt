@@ -72,14 +72,46 @@ class WorldCupRepository {
         return null
     }
 
+    fun normalizeDateString(dateStr: String): String {
+        val trimmed = dateStr.trim().lowercase()
+        val now = java.util.Date()
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        
+        return when {
+            trimmed == "today" || trimmed == "hoy" -> sdf.format(now)
+            trimmed == "tomorrow" || trimmed == "mañana" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.time = now
+                cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
+                sdf.format(cal.time)
+            }
+            trimmed == "yesterday" || trimmed == "ayer" -> {
+                val cal = java.util.Calendar.getInstance()
+                cal.time = now
+                cal.add(java.util.Calendar.DAY_OF_YEAR, -1)
+                sdf.format(cal.time)
+            }
+            else -> {
+                val dateRegex = Regex("""\d{4}-\d{2}-\d{2}""")
+                val match = dateRegex.find(trimmed)
+                if (match != null) {
+                    match.value
+                } else {
+                    dateStr
+                }
+            }
+        }
+    }
+
     fun getMatchesForDate(context: Context, dateString: String): List<WorldCupMatch> {
+        val normalizedDate = normalizeDateString(dateString)
         return try {
             val jsonString = context.assets.open("worldcup_2026.json").use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream)).use { reader ->
                     reader.readText()
                 }
             }
-            parseMatches(jsonString, dateString)
+            parseMatches(jsonString, normalizedDate)
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -87,12 +119,13 @@ class WorldCupRepository {
     }
 
     fun getTodayMatchesSummary(context: Context, dateString: String): String {
-        val matches = getMatchesForDate(context, dateString)
+        val normalizedDate = normalizeDateString(dateString)
+        val matches = getMatchesForDate(context, normalizedDate)
         if (matches.isEmpty()) {
-            return "No matches scheduled for today."
+            return "No matches scheduled for $normalizedDate."
         }
         val sb = StringBuilder()
-        sb.append("Today's FIFA World Cup 2026 Matches:\n")
+        sb.append("FIFA World Cup 2026 Matches for $normalizedDate:\n")
         matches.forEach { match ->
             val groupInfo = if (match.group != null) " (${match.group})" else ""
             sb.append("- ${match.round}$groupInfo: ${match.team1} vs ${match.team2} at ${match.time} in ${match.ground}\n")

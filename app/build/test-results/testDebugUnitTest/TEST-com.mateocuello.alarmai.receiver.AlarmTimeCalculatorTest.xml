@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-06-12T15:23:48.653Z" hostname="INSPRION16" time="0.027">
+<testsuite name="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-06-12T19:55:37.996Z" hostname="INSPRION16" time="0.019">
   <properties/>
-  <testcase name="testWeekendsOnlyAlarm_SaturdayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.021"/>
+  <testcase name="testWeekendsOnlyAlarm_SaturdayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.014"/>
   <testcase name="testFromReceiverRescheduling" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
   <testcase name="testSingleShotAlarm_BeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
   <testcase name="testWeekendsOnlyAlarm_FridayBeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>

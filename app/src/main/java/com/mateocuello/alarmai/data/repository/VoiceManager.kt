@@ -89,6 +89,36 @@ class VoiceManager(private val context: Context) {
         }
     }
 
+    private var isBeepMuted = false
+
+    private fun muteBeep() {
+        if (!isBeepMuted) {
+            try {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0)
+                audioManager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0)
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+                isBeepMuted = true
+                Log.d("VoiceManager", "Muted streams for speech recognition beep")
+            } catch (e: Exception) {
+                Log.e("VoiceManager", "Failed to mute streams: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    private fun unmuteBeep() {
+        if (isBeepMuted) {
+            try {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0)
+                audioManager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0)
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+                isBeepMuted = false
+                Log.d("VoiceManager", "Unmuted streams after speech recognition beep")
+            } catch (e: Exception) {
+                Log.e("VoiceManager", "Failed to unmute streams: ${e.localizedMessage}")
+            }
+        }
+    }
+
     init {
         initTts()
     }
@@ -176,6 +206,7 @@ class VoiceManager(private val context: Context) {
                 requestAudioFocus()
                 isListeningActive = true
 
+                muteBeep()
                 speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
 
                 val language = prefs.getLanguage()
@@ -189,7 +220,9 @@ class VoiceManager(private val context: Context) {
                 }
 
                 speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-                    override fun onReadyForSpeech(params: Bundle?) {}
+                    override fun onReadyForSpeech(params: Bundle?) {
+                        unmuteBeep()
+                    }
                     override fun onBeginningOfSpeech() {}
                     override fun onRmsChanged(rmsdB: Float) {
                         onRmsChanged(rmsdB)
@@ -198,6 +231,7 @@ class VoiceManager(private val context: Context) {
                     override fun onEndOfSpeech() {}
 
                     override fun onError(error: Int) {
+                        unmuteBeep()
                         isListeningActive = false
                         checkAndAbandonFocus()
                         val errorMessage = when (error) {
@@ -217,6 +251,7 @@ class VoiceManager(private val context: Context) {
                     }
 
                     override fun onResults(results: Bundle?) {
+                        unmuteBeep()
                         isListeningActive = false
                         checkAndAbandonFocus()
                         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
@@ -234,6 +269,7 @@ class VoiceManager(private val context: Context) {
 
                 speechRecognizer?.startListening(intent)
             } catch (e: Exception) {
+                unmuteBeep()
                 isListeningActive = false
                 checkAndAbandonFocus()
                 Log.e("VoiceManager", "Failed to start listening: ${e.localizedMessage}")
@@ -252,6 +288,7 @@ class VoiceManager(private val context: Context) {
     fun stopListening() {
         val mainHandler = android.os.Handler(context.mainLooper)
         mainHandler.post {
+            unmuteBeep()
             speechRecognizer?.stopListening()
             isListeningActive = false
             checkAndAbandonFocus()
@@ -259,6 +296,7 @@ class VoiceManager(private val context: Context) {
     }
 
     fun shutdown() {
+        unmuteBeep()
         tts?.stop()
         tts?.shutdown()
         speechRecognizer?.destroy()

@@ -45,7 +45,7 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
     private var chatSession: CustomChatSession? = null
 
     private fun getWorldCupContextText(): String {
-        return try {
+        val instructions = try {
             context.assets.open("worldcup_context.txt").use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream)).use { reader ->
                     reader.readText()
@@ -54,6 +54,16 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
         } catch (e: Exception) {
             ""
         }
+        val fixture = try {
+            context.assets.open("worldcup_2026.json").use { inputStream ->
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    reader.readText()
+                }
+            }
+        } catch (e: Exception) {
+            ""
+        }
+        return "$instructions\n\nComplete FIFA World Cup 2026 Fixture Schedule (JSON):\n$fixture"
     }
 
     private fun getSystemInstructionText(language: String, tone: String): String {
@@ -108,7 +118,7 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
         newsData: String,
         calendarData: String,
         worldCupData: String = "",
-        modelName: String = "gemini-3.5-flash"
+        modelName: String = "gemini-2.5-flash"
     ): String = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             val language = prefs.getLanguage()
@@ -211,16 +221,32 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                 return@withContext when {
                     userInput.contains("clima", ignoreCase = true) || userInput.contains("tiempo", ignoreCase = true) -> "El pronóstico de hoy es soleado y agradable, alrededor de veintidós grados Celsius."
                     userInput.contains("noticias", ignoreCase = true) -> "En noticias tecnológicas, investigadores lograron avances en la eficiencia de paneles solares."
+                    userInput.contains("mundial", ignoreCase = true) || 
+                    userInput.contains("copa", ignoreCase = true) || 
+                    userInput.contains("partido", ignoreCase = true) || 
+                    userInput.contains("fixture", ignoreCase = true) || 
+                    userInput.contains("cronograma", ignoreCase = true) || 
+                    userInput.contains("programación", ignoreCase = true) || 
+                    ((userInput.contains("calendario", ignoreCase = true) || userInput.contains("agenda", ignoreCase = true)) && 
+                     (userInput.contains("mundial", ignoreCase = true) || userInput.contains("copa", ignoreCase = true) || userInput.contains("partido", ignoreCase = true) || userInput.contains("fixture", ignoreCase = true))) -> 
+                        "Hoy en el Mundial 2026 se enfrentan Canadá contra Bosnia a las tres de la tarde y Estados Unidos contra Paraguay a las seis de la tarde."
                     userInput.contains("calendario", ignoreCase = true) || userInput.contains("agenda", ignoreCase = true) -> "No tienes eventos próximos en tu calendario."
-                    userInput.contains("mundial", ignoreCase = true) || userInput.contains("copa", ignoreCase = true) || userInput.contains("partido", ignoreCase = true) -> "Hoy en el Mundial 2026 se enfrentan Canadá contra Bosnia a las tres de la tarde y Estados Unidos contra Paraguay a las seis de la tarde."
                     else -> "¡Te escucho! Estoy funcionando en modo demo, pero una vez que configures tu clave API de Gemini en los ajustes, podremos tener una conversación completa."
                 }
             } else {
                 return@withContext when {
                     userInput.contains("weather", ignoreCase = true) -> "Today's forecast is sunny and pleasant, about twenty-two degrees Celsius."
                     userInput.contains("news", ignoreCase = true) -> "In technology news, researchers have made breakthrough progress in solar panel efficiency."
+                    userInput.contains("world cup", ignoreCase = true) || 
+                    userInput.contains("worldcup", ignoreCase = true) || 
+                    userInput.contains("match", ignoreCase = true) || 
+                    userInput.contains("game", ignoreCase = true) || 
+                    userInput.contains("fixture", ignoreCase = true) || 
+                    userInput.contains("bracket", ignoreCase = true) || 
+                    ((userInput.contains("calendar", ignoreCase = true) || userInput.contains("schedule", ignoreCase = true)) && 
+                     (userInput.contains("world cup", ignoreCase = true) || userInput.contains("worldcup", ignoreCase = true) || userInput.contains("match", ignoreCase = true) || userInput.contains("game", ignoreCase = true) || userInput.contains("fixture", ignoreCase = true))) -> 
+                        "Today in the 2026 World Cup, Canada plays Bosnia & Herzegovina at 3 PM and USA plays Paraguay at 6 PM."
                     userInput.contains("calendar", ignoreCase = true) || userInput.contains("schedule", ignoreCase = true) -> "You have no upcoming events on your calendar."
-                    userInput.contains("world cup", ignoreCase = true) || userInput.contains("match", ignoreCase = true) || userInput.contains("game", ignoreCase = true) -> "Today in the 2026 World Cup, Canada plays Bosnia & Herzegovina at 3 PM and USA plays Paraguay at 6 PM."
                     else -> "I hear you! I'm running in demo mode, but once you set your Gemini API key in settings, we can have a full open-ended conversation about anything."
                 }
             }
@@ -275,7 +301,10 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                     prefs.saveTonePreference(newPreference)
                     responseParts.add(FunctionResponsePart(name, mapOf("success" to true)))
                 } else if (name.endsWith("getWorldCupMatchesForDate") || name.endsWith("getWorldCupMatchForDate")) {
-                    val dateString = functionCall.args["dateString"]?.toString() ?: ""
+                    val dateString = functionCall.args["dateString"]?.toString()
+                        ?: functionCall.args["date"]?.toString()
+                        ?: functionCall.args["date_string"]?.toString()
+                        ?: ""
                     val repo = WorldCupRepository()
                     val summary = repo.getTodayMatchesSummary(context, dateString)
                     responseParts.add(FunctionResponsePart(name, mapOf("summary" to summary)))

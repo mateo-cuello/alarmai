@@ -66,7 +66,7 @@ class PreferencesManager(context: Context) {
     }
 
     fun getGeminiModel(): String {
-        return prefs.getString(KEY_GEMINI_MODEL, "gemini-3.5-flash") ?: "gemini-3.5-flash"
+        return prefs.getString(KEY_GEMINI_MODEL, "gemini-2.5-flash") ?: "gemini-2.5-flash"
     }
 
     fun saveNewsKey(key: String) {
