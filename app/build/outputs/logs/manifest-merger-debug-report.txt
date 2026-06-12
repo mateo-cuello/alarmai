@@ -4,7 +4,7 @@ ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-90:12
 INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-90:12
 INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-90:12
 INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:2:1-90:12
-MERGED from [com.google.ai.client.generativeai:generativeai:0.4.0] C:\Users\usuario\.gradle\caches\8.13\transforms\045030bf6662b10068a5cfba3112e3d5\transformed\generativeai-0.4.0\AndroidManifest.xml:17:1-24:12
+MERGED from [com.google.ai.client.generativeai:generativeai:0.9.0] C:\Users\usuario\.gradle\caches\8.13\transforms\1068c8fdd85606b7f9e558245b8a000e\transformed\generativeai-0.9.0\AndroidManifest.xml:17:1-24:12
 MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\usuario\.gradle\caches\8.13\transforms\b7a2be5b67442844fca5e3671d4594cc\transformed\play-services-location-21.2.0\AndroidManifest.xml:2:1-9:12
 MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\a78c36a0c70fd190296d2b871d444f17\transformed\play-services-base-18.3.0\AndroidManifest.xml:16:1-24:12
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\usuario\.gradle\caches\8.13\transforms\b476780e20d444b675c47effa36eba6a\transformed\play-services-tasks-18.1.0\AndroidManifest.xml:2:1-6:12
@@ -55,7 +55,7 @@ MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\usuario\.gradle\caches\8
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\usuario\.gradle\caches\8.13\transforms\b116612c4f622873f4057a153d6aa04f\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.customview:customview:1.0.0] C:\Users\usuario\.gradle\caches\8.13\transforms\37424be96b570842e9b27178079cffcb\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.core:core:1.12.0] C:\Users\usuario\.gradle\caches\8.13\transforms\0311e548701e11653a37fa06d5e8bf18\transformed\core-1.12.0\AndroidManifest.xml:17:1-30:12
-MERGED from [com.google.ai.client.generativeai:common:0.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\216f5559d1eaf71eadc296ca480beed7\transformed\common-0.3.0\AndroidManifest.xml:17:1-24:12
+MERGED from [com.google.ai.client.generativeai:common:0.8.0] C:\Users\usuario\.gradle\caches\8.13\transforms\e58763fa7885dc60cc14df2f0d7da017\transformed\common-0.8.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\usuario\.gradle\caches\8.13\transforms\dc22bc65f4cec4669b9c8adfc0bee3f8\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\usuario\.gradle\caches\8.13\transforms\de844eed5953b53f7700a93d429005a4\transformed\core-ktx-1.12.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.datastore:datastore-preferences:1.0.0] C:\Users\usuario\.gradle\caches\8.13\transforms\cec14bd1e2c1680844f6f8d4db65dd52\transformed\datastore-preferences-1.0.0\AndroidManifest.xml:17:1-24:12
@@ -89,10 +89,10 @@ ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:7:13-72
 		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:7:21-69
 uses-permission#android.permission.INTERNET
 ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:12:5-67
-MERGED from [com.google.ai.client.generativeai:generativeai:0.4.0] C:\Users\usuario\.gradle\caches\8.13\transforms\045030bf6662b10068a5cfba3112e3d5\transformed\generativeai-0.4.0\AndroidManifest.xml:22:5-67
-MERGED from [com.google.ai.client.generativeai:generativeai:0.4.0] C:\Users\usuario\.gradle\caches\8.13\transforms\045030bf6662b10068a5cfba3112e3d5\transformed\generativeai-0.4.0\AndroidManifest.xml:22:5-67
-MERGED from [com.google.ai.client.generativeai:common:0.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\216f5559d1eaf71eadc296ca480beed7\transformed\common-0.3.0\AndroidManifest.xml:22:5-67
-MERGED from [com.google.ai.client.generativeai:common:0.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\216f5559d1eaf71eadc296ca480beed7\transformed\common-0.3.0\AndroidManifest.xml:22:5-67
+MERGED from [com.google.ai.client.generativeai:generativeai:0.9.0] C:\Users\usuario\.gradle\caches\8.13\transforms\1068c8fdd85606b7f9e558245b8a000e\transformed\generativeai-0.9.0\AndroidManifest.xml:22:5-67
+MERGED from [com.google.ai.client.generativeai:generativeai:0.9.0] C:\Users\usuario\.gradle\caches\8.13\transforms\1068c8fdd85606b7f9e558245b8a000e\transformed\generativeai-0.9.0\AndroidManifest.xml:22:5-67
+MERGED from [com.google.ai.client.generativeai:common:0.8.0] C:\Users\usuario\.gradle\caches\8.13\transforms\e58763fa7885dc60cc14df2f0d7da017\transformed\common-0.8.0\AndroidManifest.xml:22:5-67
+MERGED from [com.google.ai.client.generativeai:common:0.8.0] C:\Users\usuario\.gradle\caches\8.13\transforms\e58763fa7885dc60cc14df2f0d7da017\transformed\common-0.8.0\AndroidManifest.xml:22:5-67
 	android:name
 		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:12:22-64
 uses-permission#android.permission.SCHEDULE_EXACT_ALARM
@@ -274,8 +274,8 @@ uses-sdk
 INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml
 INJECTED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml
-MERGED from [com.google.ai.client.generativeai:generativeai:0.4.0] C:\Users\usuario\.gradle\caches\8.13\transforms\045030bf6662b10068a5cfba3112e3d5\transformed\generativeai-0.4.0\AndroidManifest.xml:20:5-44
-MERGED from [com.google.ai.client.generativeai:generativeai:0.4.0] C:\Users\usuario\.gradle\caches\8.13\transforms\045030bf6662b10068a5cfba3112e3d5\transformed\generativeai-0.4.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.ai.client.generativeai:generativeai:0.9.0] C:\Users\usuario\.gradle\caches\8.13\transforms\1068c8fdd85606b7f9e558245b8a000e\transformed\generativeai-0.9.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.ai.client.generativeai:generativeai:0.9.0] C:\Users\usuario\.gradle\caches\8.13\transforms\1068c8fdd85606b7f9e558245b8a000e\transformed\generativeai-0.9.0\AndroidManifest.xml:20:5-44
 MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\usuario\.gradle\caches\8.13\transforms\b7a2be5b67442844fca5e3671d4594cc\transformed\play-services-location-21.2.0\AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\usuario\.gradle\caches\8.13\transforms\b7a2be5b67442844fca5e3671d4594cc\transformed\play-services-location-21.2.0\AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.gms:play-services-base:18.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\a78c36a0c70fd190296d2b871d444f17\transformed\play-services-base-18.3.0\AndroidManifest.xml:18:5-43
@@ -376,8 +376,8 @@ MERGED from [androidx.customview:customview:1.0.0] C:\Users\usuario\.gradle\cach
 MERGED from [androidx.customview:customview:1.0.0] C:\Users\usuario\.gradle\caches\8.13\transforms\37424be96b570842e9b27178079cffcb\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.core:core:1.12.0] C:\Users\usuario\.gradle\caches\8.13\transforms\0311e548701e11653a37fa06d5e8bf18\transformed\core-1.12.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.core:core:1.12.0] C:\Users\usuario\.gradle\caches\8.13\transforms\0311e548701e11653a37fa06d5e8bf18\transformed\core-1.12.0\AndroidManifest.xml:20:5-44
-MERGED from [com.google.ai.client.generativeai:common:0.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\216f5559d1eaf71eadc296ca480beed7\transformed\common-0.3.0\AndroidManifest.xml:20:5-44
-MERGED from [com.google.ai.client.generativeai:common:0.3.0] C:\Users\usuario\.gradle\caches\8.13\transforms\216f5559d1eaf71eadc296ca480beed7\transformed\common-0.3.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.ai.client.generativeai:common:0.8.0] C:\Users\usuario\.gradle\caches\8.13\transforms\e58763fa7885dc60cc14df2f0d7da017\transformed\common-0.8.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.ai.client.generativeai:common:0.8.0] C:\Users\usuario\.gradle\caches\8.13\transforms\e58763fa7885dc60cc14df2f0d7da017\transformed\common-0.8.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\usuario\.gradle\caches\8.13\transforms\dc22bc65f4cec4669b9c8adfc0bee3f8\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\usuario\.gradle\caches\8.13\transforms\dc22bc65f4cec4669b9c8adfc0bee3f8\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
 MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\usuario\.gradle\caches\8.13\transforms\de844eed5953b53f7700a93d429005a4\transformed\core-ktx-1.12.0\AndroidManifest.xml:5:5-44

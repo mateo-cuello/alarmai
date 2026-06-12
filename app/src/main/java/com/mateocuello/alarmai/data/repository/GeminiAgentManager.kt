@@ -112,28 +112,23 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
             val updateToneFunction = defineFunction(
                 name = "updateTonePreference",
                 description = "Updates the user's preferred communication tone or style of the assistant (e.g. sarcastic, formal, energetic, funny, etc.).",
-                arg1 = Schema.str(
-                    name = "newPreference",
-                    description = "The new preferred tone or style of communication requested by the user"
-                ),
-                function = { newPreference: String ->
-                    prefs.saveTonePreference(newPreference)
-                    JSONObject().apply { put("success", true) }
-                }
+                parameters = listOf(
+                    Schema.str(
+                        name = "newPreference",
+                        description = "The new preferred tone or style of communication requested by the user"
+                    )
+                )
             )
 
             val getWorldCupMatchesForDateFunction = defineFunction(
                 name = "getWorldCupMatchesForDate",
                 description = "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.",
-                arg1 = Schema.str(
-                    name = "dateString",
-                    description = "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)"
-                ),
-                function = { dateString: String ->
-                    val repo = WorldCupRepository()
-                    val summary = repo.getTodayMatchesSummary(context, dateString)
-                    JSONObject().apply { put("summary", summary) }
-                }
+                parameters = listOf(
+                    Schema.str(
+                        name = "dateString",
+                        description = "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)"
+                    )
+                )
             )
 
             val model = GenerativeModel(
@@ -200,28 +195,23 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
             val updateToneFunction = defineFunction(
                 name = "updateTonePreference",
                 description = "Updates the user's preferred communication tone or style of the assistant (e.g. sarcastic, formal, energetic, funny, etc.).",
-                arg1 = Schema.str(
-                    name = "newPreference",
-                    description = "The new preferred tone or style of communication requested by the user"
-                ),
-                function = { newPreference: String ->
-                    prefs.saveTonePreference(newPreference)
-                    JSONObject().apply { put("success", true) }
-                }
+                parameters = listOf(
+                    Schema.str(
+                        name = "newPreference",
+                        description = "The new preferred tone or style of communication requested by the user"
+                    )
+                )
             )
 
             val getWorldCupMatchesForDateFunction = defineFunction(
                 name = "getWorldCupMatchesForDate",
                 description = "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.",
-                arg1 = Schema.str(
-                    name = "dateString",
-                    description = "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)"
-                ),
-                function = { dateString: String ->
-                    val repo = WorldCupRepository()
-                    val summary = repo.getTodayMatchesSummary(context, dateString)
-                    JSONObject().apply { put("summary", summary) }
-                }
+                parameters = listOf(
+                    Schema.str(
+                        name = "dateString",
+                        description = "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)"
+                    )
+                )
             )
 
             val model = GenerativeModel(
