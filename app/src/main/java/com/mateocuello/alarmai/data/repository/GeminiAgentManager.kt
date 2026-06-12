@@ -1,27 +1,49 @@
-@file:OptIn(com.google.ai.client.generativeai.type.GenerativeBeta::class)
-
 package com.mateocuello.alarmai.data.repository
 
-import com.google.ai.client.generativeai.Chat
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
-import com.google.ai.client.generativeai.type.FunctionDeclaration
-import com.google.ai.client.generativeai.type.Schema
-import com.google.ai.client.generativeai.type.Tool
-import com.google.ai.client.generativeai.type.FunctionResponsePart
-import com.google.ai.client.generativeai.type.FunctionCallPart
-import com.google.ai.client.generativeai.type.defineFunction
-import com.google.ai.client.generativeai.type.GenerateContentResponse
-import com.mateocuello.alarmai.data.local.PreferencesManager
 import android.content.Context
+import com.mateocuello.alarmai.data.local.PreferencesManager
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 
 class GeminiAgentManager(private val context: Context, private val prefs: PreferencesManager) {
-    private var chatSession: Chat? = null
+
+    // Custom ChatSession data structures to replace the legacy SDK classes
+    data class Content(
+        val role: String,
+        val parts: List<Part>
+    )
+
+    sealed interface Part
+
+    data class TextPart(val text: String) : Part
+
+    data class FunctionCallPart(
+        val name: String,
+        val args: Map<String, Any?>,
+        val thoughtSignature: String? = null
+    ) : Part
+
+    data class FunctionResponsePart(
+        val name: String,
+        val response: Map<String, Any?>
+    ) : Part
+
+    class CustomChatSession(
+        val apiKey: String,
+        val modelName: String,
+        val systemInstructionText: String,
+        val history: MutableList<Content> = mutableListOf()
+    )
+
+    private var chatSession: CustomChatSession? = null
 
     private fun getWorldCupContextText(): String {
         return try {
@@ -110,38 +132,6 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
 
             val systemInstructionText = getSystemInstructionText(language, tone)
 
-            val updateToneFunction = defineFunction(
-                name = "updateTonePreference",
-                description = "Updates the user's preferred communication tone or style of the assistant (e.g. sarcastic, formal, energetic, funny, etc.).",
-                parameters = listOf(
-                    Schema.str(
-                        name = "newPreference",
-                        description = "The new preferred tone or style of communication requested by the user"
-                    )
-                )
-            )
-
-            val getWorldCupMatchesForDateFunction = defineFunction(
-                name = "getWorldCupMatchesForDate",
-                description = "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.",
-                parameters = listOf(
-                    Schema.str(
-                        name = "dateString",
-                        description = "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)"
-                    )
-                )
-            )
-
-            val model = GenerativeModel(
-                modelName = modelName,
-                apiKey = apiKey,
-                systemInstruction = content { text(systemInstructionText) },
-                tools = listOf(Tool(functionDeclarations = listOf(updateToneFunction, getWorldCupMatchesForDateFunction)))
-            )
-
-            val session = model.startChat()
-            chatSession = session
-
             val initialPrompt = if (language == "es") {
                 """
                     Comienza el resumen matutino. Aquí están los datos del día:
@@ -164,9 +154,14 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                 """.trimIndent()
             }
 
-            val response = session.sendMessage(initialPrompt)
-            val finalResponse = handleFunctionCalls(session, response)
-            finalResponse.text ?: (if (language == "es") "¡Buenos días! Tuve problemas para generar tu resumen. ¿Qué puedo hacer por ti hoy?" else "Good morning! I had trouble generating your briefing. What can I do for you today?")
+            val session = CustomChatSession(
+                apiKey = apiKey,
+                modelName = modelName,
+                systemInstructionText = systemInstructionText
+            )
+            chatSession = session
+
+            sendMessageInternal(session, initialPrompt)
         } catch (e: Exception) {
             val language = prefs.getLanguage()
             if (language == "es") {
@@ -194,40 +189,14 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
 
             val systemInstructionText = getSystemInstructionText(language, tone)
 
-            val updateToneFunction = defineFunction(
-                name = "updateTonePreference",
-                description = "Updates the user's preferred communication tone or style of the assistant (e.g. sarcastic, formal, energetic, funny, etc.).",
-                parameters = listOf(
-                    Schema.str(
-                        name = "newPreference",
-                        description = "The new preferred tone or style of communication requested by the user"
-                    )
-                )
-            )
-
-            val getWorldCupMatchesForDateFunction = defineFunction(
-                name = "getWorldCupMatchesForDate",
-                description = "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.",
-                parameters = listOf(
-                    Schema.str(
-                        name = "dateString",
-                        description = "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)"
-                    )
-                )
-            )
-
-            val model = GenerativeModel(
-                modelName = modelName,
+            val session = CustomChatSession(
                 apiKey = apiKey,
-                systemInstruction = content { text(systemInstructionText) },
-                tools = listOf(Tool(functionDeclarations = listOf(updateToneFunction, getWorldCupMatchesForDateFunction)))
+                modelName = modelName,
+                systemInstructionText = systemInstructionText
             )
-
-            val history = listOf(
-                content(role = "user") { text(prompt) },
-                content(role = "model") { text(response) }
-            )
-            chatSession = model.startChat(history = history)
+            session.history.add(Content("user", listOf(TextPart(prompt))))
+            session.history.add(Content("model", listOf(TextPart(response))))
+            chatSession = session
         } catch (e: Exception) {
             e.printStackTrace()
             chatSession = null
@@ -259,67 +228,234 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
         }
 
         try {
-            val response = session.sendMessage(userInput)
-            val finalResponse = handleFunctionCalls(session, response)
-            finalResponse.text ?: "I heard you, but I couldn't generate a reply. Can you repeat that?"
+            sendMessageInternal(session, userInput)
         } catch (e: Exception) {
             "Sorry, I had trouble contacting the AI. Error: ${e.localizedMessage}"
         }
     }
 
-    private suspend fun handleFunctionCalls(session: Chat, initialResponse: GenerateContentResponse): GenerateContentResponse {
-        var response = initialResponse
-        var functionCall = response.candidates.firstOrNull()?.content?.parts
-            ?.filterIsInstance<FunctionCallPart>()
-            ?.firstOrNull()
+    private suspend fun sendMessageInternal(session: CustomChatSession, userInput: String): String {
+        val userContent = Content("user", listOf(TextPart(userInput)))
+        session.history.add(userContent)
 
-        while (functionCall != null) {
-            val name = functionCall.name
-            if (name.endsWith("updateTonePreference")) {
-                val newPreference = functionCall.args["newPreference"] ?: ""
-                prefs.saveTonePreference(newPreference)
-
-                val responsePart = FunctionResponsePart(
-                    name,
-                    JSONObject().apply {
-                        put("success", true)
-                    }
-                )
-
-                response = session.sendMessage(content {
-                    part(responsePart)
-                })
-                functionCall = response.candidates.firstOrNull()?.content?.parts
-                    ?.filterIsInstance<FunctionCallPart>()
-                    ?.firstOrNull()
-            } else if (name.endsWith("getWorldCupMatchesForDate")) {
-                val dateString = functionCall.args["dateString"] ?: ""
-                val repo = WorldCupRepository()
-                val summary = repo.getTodayMatchesSummary(context, dateString)
-
-                val responsePart = FunctionResponsePart(
-                    name,
-                    JSONObject().apply {
-                        put("summary", summary)
-                    }
-                )
-
-                response = session.sendMessage(content {
-                    part(responsePart)
-                })
-                functionCall = response.candidates.firstOrNull()?.content?.parts
-                    ?.filterIsInstance<FunctionCallPart>()
-                    ?.firstOrNull()
+        val responseContent = callGeminiAndHandleFunctions(session)
+        val textResponse = responseContent.parts.filterIsInstance<TextPart>().joinToString("\n") { it.text }
+        return textResponse.ifBlank {
+            if (prefs.getLanguage() == "es") {
+                "Escuché tu mensaje, pero no pude generar una respuesta. ¿Puedes repetirlo?"
             } else {
-                break
+                "I heard you, but I couldn't generate a reply. Can you repeat that?"
             }
         }
-        return response
+    }
+
+    private suspend fun callGeminiAndHandleFunctions(session: CustomChatSession): Content {
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/${session.modelName}:generateContent?key=${session.apiKey}"
+
+        while (true) {
+            val requestBody = buildRequestBody(session.history, session.systemInstructionText)
+            val responseJson = makePostRequest(url, requestBody.toString())
+            val responseContent = parseResponseContent(responseJson) ?: throw Exception("Failed to parse response")
+
+            // Add the model's response to history
+            session.history.add(responseContent)
+
+            // Extract all function calls from the response
+            val functionCalls = responseContent.parts.filterIsInstance<FunctionCallPart>()
+            if (functionCalls.isEmpty()) {
+                // Done!
+                return responseContent
+            }
+
+            // Execute function calls
+            val responseParts = mutableListOf<Part>()
+            for (functionCall in functionCalls) {
+                val name = functionCall.name
+                if (name.endsWith("updateTonePreference")) {
+                    val newPreference = functionCall.args["newPreference"]?.toString() ?: ""
+                    prefs.saveTonePreference(newPreference)
+                    responseParts.add(FunctionResponsePart(name, mapOf("success" to true)))
+                } else if (name.endsWith("getWorldCupMatchesForDate")) {
+                    val dateString = functionCall.args["dateString"]?.toString() ?: ""
+                    val repo = WorldCupRepository()
+                    val summary = repo.getTodayMatchesSummary(context, dateString)
+                    responseParts.add(FunctionResponsePart(name, mapOf("summary" to summary)))
+                }
+            }
+
+            // Add function response as user turn containing FunctionResponseParts
+            val toolResponseContent = Content("user", responseParts)
+            session.history.add(toolResponseContent)
+        }
+    }
+
+    internal fun contentToJson(content: Content): JSONObject {
+        val json = JSONObject()
+        json.put("role", content.role)
+        val partsArray = JSONArray()
+        for (part in content.parts) {
+            val partJson = JSONObject()
+            when (part) {
+                is TextPart -> {
+                    partJson.put("text", part.text)
+                }
+                is FunctionCallPart -> {
+                    val fcJson = JSONObject()
+                    fcJson.put("name", part.name)
+                    val argsJson = JSONObject()
+                    for ((k, v) in part.args) {
+                        argsJson.put(k, v)
+                    }
+                    fcJson.put("args", argsJson)
+                    partJson.put("functionCall", fcJson)
+                    if (!part.thoughtSignature.isNullOrEmpty()) {
+                        partJson.put("thought_signature", part.thoughtSignature)
+                    }
+                }
+                is FunctionResponsePart -> {
+                    val frJson = JSONObject()
+                    frJson.put("name", part.name)
+                    val respJson = JSONObject()
+                    for ((k, v) in part.response) {
+                        respJson.put(k, v)
+                    }
+                    frJson.put("response", respJson)
+                    partJson.put("functionResponse", frJson)
+                }
+            }
+            partsArray.put(partJson)
+        }
+        json.put("parts", partsArray)
+        return json
+    }
+
+    internal fun parseResponseContent(jsonString: String): Content? {
+        val root = JSONObject(jsonString)
+        val candidates = root.optJSONArray("candidates") ?: return null
+        if (candidates.length() == 0) return null
+        val candidate = candidates.getJSONObject(0)
+        val contentJson = candidate.optJSONObject("content") ?: return null
+        val role = contentJson.optString("role", "model")
+        val partsArray = contentJson.optJSONArray("parts") ?: return null
+        val parts = mutableListOf<Part>()
+        for (i in 0 until partsArray.length()) {
+            val partJson = partsArray.getJSONObject(i)
+            if (partJson.has("text")) {
+                parts.add(TextPart(partJson.getString("text")))
+            } else if (partJson.has("functionCall")) {
+                val fcJson = partJson.getJSONObject("functionCall")
+                val name = fcJson.getString("name")
+                val argsJson = fcJson.optJSONObject("args")
+                val args = mutableMapOf<String, Any?>()
+                if (argsJson != null) {
+                    val keys = argsJson.keys()
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        args[key] = argsJson.get(key)
+                    }
+                }
+                val thoughtSignature = if (partJson.has("thought_signature")) partJson.optString("thought_signature") else null
+                parts.add(FunctionCallPart(name, args, thoughtSignature))
+            }
+        }
+        return Content(role, parts)
+    }
+
+    private fun buildRequestBody(
+        history: List<Content>,
+        systemInstructionText: String
+    ): JSONObject {
+        val body = JSONObject()
+
+        // Contents
+        val contentsArray = JSONArray()
+        for (content in history) {
+            contentsArray.put(contentToJson(content))
+        }
+        body.put("contents", contentsArray)
+
+        // System instruction
+        val sysInstruction = JSONObject().apply {
+            put("parts", JSONArray().put(JSONObject().put("text", systemInstructionText)))
+        }
+        body.put("systemInstruction", sysInstruction)
+
+        // Tools
+        val toolsArray = JSONArray()
+        val toolObject = JSONObject()
+        val functionDeclarations = JSONArray()
+
+        // updateTonePreference
+        val updateTone = JSONObject().apply {
+            put("name", "updateTonePreference")
+            put("description", "Updates the user's preferred communication tone or style of the assistant (e.g. sarcastic, formal, energetic, funny, etc.).")
+            put("parameters", JSONObject().apply {
+                put("type", "OBJECT")
+                put("properties", JSONObject().apply {
+                    put("newPreference", JSONObject().apply {
+                        put("type", "STRING")
+                        put("description", "The new preferred tone or style of communication requested by the user")
+                    })
+                })
+                put("required", JSONArray().put("newPreference"))
+            })
+        }
+        functionDeclarations.put(updateTone)
+
+        // getWorldCupMatchesForDate
+        val getWorldCupMatches = JSONObject().apply {
+            put("name", "getWorldCupMatchesForDate")
+            put("description", "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.")
+            put("parameters", JSONObject().apply {
+                put("type", "OBJECT")
+                put("properties", JSONObject().apply {
+                    put("dateString", JSONObject().apply {
+                        put("type", "STRING")
+                        put("description", "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)")
+                    })
+                })
+                put("required", JSONArray().put("dateString"))
+            })
+        }
+        functionDeclarations.put(getWorldCupMatches)
+
+        toolObject.put("functionDeclarations", functionDeclarations)
+        toolsArray.put(toolObject)
+        body.put("tools", toolsArray)
+
+        return body
+    }
+
+    private suspend fun makePostRequest(url: String, jsonBody: String): String = withContext(Dispatchers.IO) {
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val body = jsonBody.toRequestBody(mediaType)
+        val request = Request.Builder()
+            .url(url)
+            .post(body)
+            .build()
+        client.newCall(request).execute().use { response ->
+            val errBody = response.body?.string() ?: ""
+            if (!response.isSuccessful) {
+                var errMsg = "HTTP ${response.code}"
+                try {
+                    val errJson = JSONObject(errBody)
+                    val errorObj = errJson.optJSONObject("error")
+                    if (errorObj != null) {
+                        errMsg = errorObj.optString("message", errMsg)
+                    }
+                } catch (e: Exception) {
+                    if (errBody.isNotBlank()) {
+                        errMsg = errBody
+                    }
+                }
+                throw Exception(errMsg)
+            }
+            errBody
+        }
     }
 
     fun clearSession() {
         chatSession = null
     }
 }
-
-

@@ -99,4 +99,64 @@ class GeminiAgentManagerTest {
         val otherResp = geminiAgentManager.sendMessage("Hello")
         assertTrue(otherResp.contains("demo mode"))
     }
+
+    @Test
+    fun testSerializationWithThoughtSignature() {
+        val content = GeminiAgentManager.Content(
+            role = "model",
+            parts = listOf(
+                GeminiAgentManager.FunctionCallPart(
+                    name = "getWorldCupMatchesForDate",
+                    args = mapOf("dateString" to "2026-06-12"),
+                    thoughtSignature = "test_signature_abc_123"
+                )
+            )
+        )
+        val json = geminiAgentManager.contentToJson(content)
+        assertEquals("model", json.getString("role"))
+        
+        val partsArray = json.getJSONArray("parts")
+        assertEquals(1, partsArray.length())
+        
+        val partObj = partsArray.getJSONObject(0)
+        assertTrue(partObj.has("functionCall"))
+        assertEquals("test_signature_abc_123", partObj.getString("thought_signature"))
+    }
+
+    @Test
+    fun testDeserializationWithThoughtSignature() {
+        val jsonString = """
+            {
+                "candidates": [
+                    {
+                        "content": {
+                            "role": "model",
+                            "parts": [
+                                {
+                                    "functionCall": {
+                                        "name": "getWorldCupMatchesForDate",
+                                        "args": {
+                                            "dateString": "2026-06-12"
+                                        }
+                                    },
+                                    "thought_signature": "test_signature_abc_123"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        """.trimIndent()
+        
+        val content = geminiAgentManager.parseResponseContent(jsonString)
+        assertEquals("model", content?.role)
+        assertEquals(1, content?.parts?.size)
+        
+        val part = content?.parts?.get(0)
+        assertTrue(part is GeminiAgentManager.FunctionCallPart)
+        val fcPart = part as GeminiAgentManager.FunctionCallPart
+        assertEquals("getWorldCupMatchesForDate", fcPart.name)
+        assertEquals("2026-06-12", fcPart.args["dateString"])
+        assertEquals("test_signature_abc_123", fcPart.thoughtSignature)
+    }
 }
