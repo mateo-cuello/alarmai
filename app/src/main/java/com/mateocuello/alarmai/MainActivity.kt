@@ -1,6 +1,7 @@
 package com.mateocuello.alarmai
 
 import android.app.AlarmManager
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Context
@@ -162,6 +163,7 @@ fun MainScreen(viewModel: MainViewModel) {
     LaunchedEffect(Unit) {
         permissionLauncher.launch(permissionsToRequest)
         checkExactAlarmPermission(context)
+        checkFullScreenIntentPermission(context)
     }
 
     val gradient = Brush.verticalGradient(
@@ -849,6 +851,28 @@ private fun checkExactAlarmPermission(context: Context) {
                 context.startActivity(intent)
             } catch (e: Exception) {
                 // Fallback to general settings
+                val intent = Intent(Settings.ACTION_SETTINGS)
+                context.startActivity(intent)
+            }
+        }
+    }
+}
+
+private fun checkFullScreenIntentPermission(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (!notificationManager.canUseFullScreenIntent()) {
+            Toast.makeText(
+                context,
+                "Please enable 'Full Screen Notifications' permission for the alarm to show over the lockscreen.",
+                Toast.LENGTH_LONG
+            ).show()
+            try {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
                 val intent = Intent(Settings.ACTION_SETTINGS)
                 context.startActivity(intent)
             }
