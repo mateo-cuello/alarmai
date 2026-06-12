@@ -12,15 +12,31 @@ import com.google.ai.client.generativeai.type.FunctionResponsePart
 import com.google.ai.client.generativeai.type.FunctionCallPart
 import com.google.ai.client.generativeai.type.defineFunction
 import com.mateocuello.alarmai.data.local.PreferencesManager
+import android.content.Context
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
-class GeminiAgentManager(private val prefs: PreferencesManager) {
+class GeminiAgentManager(private val context: Context, private val prefs: PreferencesManager) {
     private var chatSession: Chat? = null
+
+    private fun getWorldCupContextText(): String {
+        return try {
+            context.assets.open("worldcup_context.txt").use { inputStream ->
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    reader.readText()
+                }
+            }
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     private fun getSystemInstructionText(language: String, tone: String): String {
         val now = java.util.Date()
+        val worldCupContext = getWorldCupContextText()
         return if (language == "es") {
             val dateSdf = java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", java.util.Locale("es", "ES"))
             val timeSdf = java.text.SimpleDateFormat("HH:mm", java.util.Locale("es", "ES"))
@@ -38,6 +54,8 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
                 - Fecha y hora actual del usuario: $dateStr, $timeStr
                 - Copa Mundial FIFA 2026: Se está disputando en este momento (junio y julio de 2026).
                 - Estilo y tono de comunicación preferido: $tone
+                
+                $worldCupContext
             """.trimIndent()
         } else {
             val dateSdf = java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", java.util.Locale.US)
@@ -56,6 +74,8 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
                 - User's current date and time: $dateStr at $timeStr
                 - FIFA World Cup 2026: Currently ongoing (June/July 2026).
                 - Preferred communication style/tone: $tone
+                
+                $worldCupContext
             """.trimIndent()
         }
     }
@@ -102,11 +122,25 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
                 }
             )
 
+            val getWorldCupMatchesForDateFunction = defineFunction(
+                name = "getWorldCupMatchesForDate",
+                description = "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.",
+                arg1 = Schema.str(
+                    name = "dateString",
+                    description = "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)"
+                ),
+                function = { dateString: String ->
+                    val repo = WorldCupRepository()
+                    val summary = repo.getTodayMatchesSummary(context, dateString)
+                    JSONObject().apply { put("summary", summary) }
+                }
+            )
+
             val model = GenerativeModel(
                 modelName = modelName,
                 apiKey = apiKey,
                 systemInstruction = content { text(systemInstructionText) },
-                tools = listOf(Tool(functionDeclarations = listOf(updateToneFunction)))
+                tools = listOf(Tool(functionDeclarations = listOf(updateToneFunction, getWorldCupMatchesForDateFunction)))
             )
 
             val session = model.startChat()
@@ -176,11 +210,25 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
                 }
             )
 
+            val getWorldCupMatchesForDateFunction = defineFunction(
+                name = "getWorldCupMatchesForDate",
+                description = "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.",
+                arg1 = Schema.str(
+                    name = "dateString",
+                    description = "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)"
+                ),
+                function = { dateString: String ->
+                    val repo = WorldCupRepository()
+                    val summary = repo.getTodayMatchesSummary(context, dateString)
+                    JSONObject().apply { put("summary", summary) }
+                }
+            )
+
             val model = GenerativeModel(
                 modelName = modelName,
                 apiKey = apiKey,
                 systemInstruction = content { text(systemInstructionText) },
-                tools = listOf(Tool(functionDeclarations = listOf(updateToneFunction)))
+                tools = listOf(Tool(functionDeclarations = listOf(updateToneFunction, getWorldCupMatchesForDateFunction)))
             )
 
             val history = listOf(
@@ -233,6 +281,24 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
                         "updateTonePreference",
                         JSONObject().apply {
                             put("success", true)
+                        }
+                    )
+
+                    response = session.sendMessage(content {
+                        part(responsePart)
+                    })
+                    functionCall = response.candidates.firstOrNull()?.content?.parts
+                        ?.filterIsInstance<FunctionCallPart>()
+                        ?.firstOrNull()
+                } else if (functionCall.name == "getWorldCupMatchesForDate") {
+                    val dateString = functionCall.args["dateString"] ?: ""
+                    val repo = WorldCupRepository()
+                    val summary = repo.getTodayMatchesSummary(context, dateString)
+
+                    val responsePart = FunctionResponsePart(
+                        "getWorldCupMatchesForDate",
+                        JSONObject().apply {
+                            put("summary", summary)
                         }
                     )
 

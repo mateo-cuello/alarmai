@@ -1,5 +1,7 @@
 package com.mateocuello.alarmai.data.repository
 
+import android.content.Context
+import android.content.res.AssetManager
 import com.mateocuello.alarmai.data.local.PreferencesManager
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -9,8 +11,15 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import java.io.ByteArrayInputStream
 
 class GeminiAgentManagerTest {
+
+    @Mock
+    private lateinit var context: Context
+
+    @Mock
+    private lateinit var assetManager: AssetManager
 
     @Mock
     private lateinit var prefs: PreferencesManager
@@ -20,7 +29,9 @@ class GeminiAgentManagerTest {
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        geminiAgentManager = GeminiAgentManager(prefs)
+        `when`(context.assets).thenReturn(assetManager)
+        `when`(assetManager.open("worldcup_context.txt")).thenReturn(ByteArrayInputStream("Mock World Cup Context".toByteArray()))
+        geminiAgentManager = GeminiAgentManager(context, prefs)
     }
 
     @Test

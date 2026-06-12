@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.data.local.PreferencesManagerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-06-12T13:35:47.706Z" hostname="INSPRION16" time="1.212">
+<testsuite name="com.mateocuello.alarmai.data.local.PreferencesManagerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-06-12T13:57:52.724Z" hostname="INSPRION16" time="1.162">
   <properties/>
-  <testcase name="testSaveTonePreference" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="1.197"/>
-  <testcase name="testSaveVoiceName" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="0.003"/>
+  <testcase name="testSaveTonePreference" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="1.148"/>
+  <testcase name="testSaveVoiceName" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="0.002"/>
   <testcase name="testSaveLanguage" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="0.003"/>
-  <testcase name="testDefaultVoiceName" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="0.003"/>
+  <testcase name="testDefaultVoiceName" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="0.002"/>
   <testcase name="testDefaultLanguage" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="0.002"/>
   <testcase name="testDefaultTonePreference" classname="com.mateocuello.alarmai.data.local.PreferencesManagerTest" time="0.002"/>
   <system-out><![CDATA[]]></system-out>

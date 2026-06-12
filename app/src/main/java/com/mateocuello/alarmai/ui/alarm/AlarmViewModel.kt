@@ -44,7 +44,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val weatherRepository = WeatherRepository()
     private val newsRepository = NewsRepository()
     private val calendarRepository = CalendarRepository(application)
-    private val geminiAgentManager = GeminiAgentManager(prefs)
+    private val geminiAgentManager = GeminiAgentManager(application, prefs)
     private val voiceManager = VoiceManager(application)
 
     private var noSpeechTimeoutJob: kotlinx.coroutines.Job? = null

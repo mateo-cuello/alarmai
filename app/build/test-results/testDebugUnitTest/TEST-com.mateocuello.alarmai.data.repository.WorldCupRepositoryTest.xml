@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-12T13:35:49.025Z" hostname="INSPRION16" time="0.011">
+<testsuite name="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-12T13:57:54.018Z" hostname="INSPRION16" time="0.013">
   <properties/>
-  <testcase name="testParseMatches_noMatchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.009"/>
+  <testcase name="testParseMatches_noMatchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.011"/>
   <testcase name="testParseMatches_invalidJson" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.0"/>
   <testcase name="testParseMatches_matchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.002"/>
   <system-out><![CDATA[]]></system-out>
