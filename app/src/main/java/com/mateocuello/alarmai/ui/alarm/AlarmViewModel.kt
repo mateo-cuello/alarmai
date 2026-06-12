@@ -27,6 +27,16 @@ enum class AlarmState {
     FINISHED
 }
 
+enum class MessageSender {
+    USER,
+    AGENT
+}
+
+data class ChatMessage(
+    val sender: MessageSender,
+    val text: String
+)
+
 class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = PreferencesManager(application)
@@ -64,6 +74,18 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
                 Log.e("AlarmViewModel", "Error prefetching location: ${e.localizedMessage}")
             }
         }
+    }
+
+    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages
+
+    private fun addChatMessage(sender: MessageSender, text: String) {
+        if (text.isBlank()) return
+        val currentList = _chatMessages.value
+        if (currentList.isNotEmpty() && currentList.last().sender == sender && currentList.last().text == text) {
+            return
+        }
+        _chatMessages.value = currentList + ChatMessage(sender, text)
     }
 
     private val _agentSpeech = MutableStateFlow("Tap 'Dismiss & Talk' to start your day.")
@@ -171,6 +193,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         voiceManager.stopListening()
         
         _agentSpeech.value = text
+        addChatMessage(MessageSender.AGENT, text)
         _uiState.value = AlarmState.SPEAKING
         _userSpeech.value = ""
         _micVolume.value = 0f
@@ -224,6 +247,8 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         voiceManager.stopSpeaking()
         _micVolume.value = 0f
 
+        addChatMessage(MessageSender.USER, text)
+
         // If the user says goodbye or close, finish the session
         val goodbyeKeywords = if (prefs.getLanguage() == "es") {
             listOf("adios", "adiós", "salir", "terminar", "chau", "chao", "cerrar", "bye", "goodbye")
@@ -234,6 +259,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 val goodbyeMsg = if (prefs.getLanguage() == "es") "¡Que tengas un excelente día! Adiós." else "Have a great day ahead! Goodbye."
                 _agentSpeech.value = goodbyeMsg
+                addChatMessage(MessageSender.AGENT, goodbyeMsg)
                 _uiState.value = AlarmState.SPEAKING
                 voiceManager.speak(goodbyeMsg) {
                     _uiState.value = AlarmState.FINISHED
@@ -263,5 +289,6 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         cancelNoSpeechTimeout()
         voiceManager.shutdown()
         geminiAgentManager.clearSession()
+        _chatMessages.value = emptyList()
     }
 }

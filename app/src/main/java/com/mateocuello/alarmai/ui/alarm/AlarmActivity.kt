@@ -44,6 +44,9 @@ import com.mateocuello.alarmai.ui.theme.PrimaryPurple
 import com.mateocuello.alarmai.ui.theme.SecondaryPink
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 class AlarmActivity : ComponentActivity() {
 
@@ -58,7 +61,7 @@ class AlarmActivity : ComponentActivity() {
         setContent {
             AlarmAITheme {
                 val state by viewModel.uiState.collectAsState()
-                val agentSpeech by viewModel.agentSpeech.collectAsState()
+                val chatMessages by viewModel.chatMessages.collectAsState()
                 val userSpeech by viewModel.userSpeech.collectAsState()
                 val statusMessage by viewModel.statusMessage.collectAsState()
                 val geminiModelName by viewModel.geminiModelName.collectAsState()
@@ -77,7 +80,7 @@ class AlarmActivity : ComponentActivity() {
                 ) {
                     AlarmScreenContent(
                         state = state,
-                        agentSpeech = agentSpeech,
+                        chatMessages = chatMessages,
                         userSpeech = userSpeech,
                         statusMessage = statusMessage,
                         geminiModelName = geminiModelName,
@@ -113,7 +116,7 @@ class AlarmActivity : ComponentActivity() {
 @Composable
 fun AlarmScreenContent(
     state: AlarmState,
-    agentSpeech: String,
+    chatMessages: List<ChatMessage>,
     userSpeech: String,
     statusMessage: String,
     geminiModelName: String,
@@ -135,7 +138,7 @@ fun AlarmScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .background(gradient)
-            .padding(24.dp),
+            .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -147,7 +150,7 @@ fun AlarmScreenContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
+                    .padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -181,9 +184,16 @@ fun AlarmScreenContent(
                 when (state) {
                     AlarmState.RINGING -> RingingLayout(onDismiss)
                     AlarmState.FETCHING_DATA -> LoadingLayout(statusMessage)
-                    AlarmState.SPEAKING -> SpeakingLayout(agentSpeech, onSendText, onMicClick)
-                    AlarmState.LISTENING -> ListeningLayout(userSpeech, micVolume, onSendText, onMicClick)
-                    AlarmState.THINKING -> ThinkingLayout()
+                    AlarmState.SPEAKING, AlarmState.LISTENING, AlarmState.THINKING -> {
+                        ChatLayout(
+                            chatMessages = chatMessages,
+                            state = state,
+                            userSpeech = userSpeech,
+                            micVolume = micVolume,
+                            onSendText = onSendText,
+                            onMicClick = onMicClick
+                        )
+                    }
                     else -> {}
                 }
             }
@@ -198,7 +208,7 @@ fun AlarmScreenContent(
                 text = "Powered by $displayName",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.3f),
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
         }
     }
@@ -303,82 +313,77 @@ fun LoadingLayout(status: String) {
 }
 
 @Composable
-fun SpeakingLayout(
-    speech: String,
+fun ChatLayout(
+    chatMessages: List<ChatMessage>,
+    state: AlarmState,
+    userSpeech: String,
+    micVolume: Float,
     onSendText: (String) -> Unit,
     onMicClick: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse_agent")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.95f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "agent_scale"
-    )
-
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     var textVal by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
+
+    // Auto-scroll to bottom on messages list change or transient user speech change
+    LaunchedEffect(chatMessages.size, userSpeech) {
+        if (chatMessages.isNotEmpty()) {
+            listState.animateScrollToItem(chatMessages.size - 1)
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Top section with speaker and card
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
+        // Chat list area
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .scale(scale)
-                    .background(SecondaryPink.copy(alpha = 0.2f), shape = CircleShape)
-                    .border(2.dp, SecondaryPink, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                    contentDescription = "Agent Speaking",
-                    tint = SecondaryPink,
-                    modifier = Modifier.size(48.dp)
-                )
+            items(chatMessages) { message ->
+                ChatBubble(message = message)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
-            ) {
-                Text(
-                    text = speech,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 28.sp),
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(24.dp)
-                )
+            if (state == AlarmState.THINKING) {
+                item {
+                    AgentThinkingBubble()
+                }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
+            if (state == AlarmState.LISTENING && userSpeech.isNotBlank()) {
+                item {
+                    UserSpeechBubble(userSpeech = userSpeech)
+                }
+            }
         }
 
-        // Bottom section with quick actions and keyboard fallback
+        // Action items and input
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Visual feedback indicator for Speaking or Listening
+            if (state == AlarmState.LISTENING) {
+                VoiceInputVisualizer(micVolume = micVolume)
+            } else if (state == AlarmState.SPEAKING) {
+                AgentSpeakingIndicator()
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Quick reply chips
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -394,11 +399,11 @@ fun SpeakingLayout(
                 }
             }
 
-            // Input text field and mic button
+            // Chat input row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -437,16 +442,18 @@ fun SpeakingLayout(
                     singleLine = true
                 )
 
+                val micBgColor = if (state == AlarmState.LISTENING) Color(0xFF06B6D4) else Color.White.copy(alpha = 0.15f)
+                val micIconColor = if (state == AlarmState.LISTENING) Color.White else Color.White.copy(alpha = 0.7f)
                 IconButton(
                     onClick = onMicClick,
                     modifier = Modifier
                         .size(56.dp)
-                        .background(Color(0xFF06B6D4), shape = CircleShape)
+                        .background(micBgColor, shape = CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Mic,
                         contentDescription = "Start Listening",
-                        tint = Color.White
+                        tint = micIconColor
                     )
                 }
             }
@@ -455,16 +462,150 @@ fun SpeakingLayout(
 }
 
 @Composable
-fun ListeningLayout(
-    userSpeech: String,
-    micVolume: Float,
-    onSendText: (String) -> Unit,
-    onMicClick: () -> Unit
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse_mic")
+fun ChatBubble(message: ChatMessage) {
+    val isUser = message.sender == MessageSender.USER
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .wrapContentWidth(align = if (isUser) Alignment.End else Alignment.Start)
+                .background(
+                    brush = if (isUser) {
+                        Brush.linearGradient(
+                            colors = listOf(PrimaryPurple, SecondaryPink)
+                        )
+                    } else {
+                        Brush.linearGradient(
+                            colors = listOf(Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = 0.04f))
+                        )
+                    },
+                    shape = RoundedCornerShape(
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = if (isUser) 16.dp else 2.dp,
+                        bottomEnd = if (isUser) 2.dp else 16.dp
+                    )
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (isUser) Color.White.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = if (isUser) 16.dp else 2.dp,
+                        bottomEnd = if (isUser) 2.dp else 16.dp
+                    )
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = message.text,
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
+                color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+fun UserSpeechBubble(userSpeech: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .wrapContentWidth(align = Alignment.End)
+                .background(
+                    color = PrimaryPurple.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 2.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = PrimaryPurple.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 2.dp)
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = "\"$userSpeech\"",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = 16.sp,
+                    lineHeight = 24.sp,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                ),
+                color = Color.White.copy(alpha = 0.9f)
+            )
+        }
+    }
+}
+
+@Composable
+fun AgentThinkingBubble() {
+    val infiniteTransition = rememberInfiniteTransition(label = "thinking")
     
-    // Smooth the volume changes to avoid jittery movements
-    // RmsdB is typically -2f to 10f. Let's normalize it to 0f to 1f.
+    val dot1Scale by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dot1"
+    )
+    val dot2Scale by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, delayMillis = 200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dot2"
+    )
+    val dot3Scale by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, delayMillis = 400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dot3"
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Row(
+            modifier = Modifier
+                .background(
+                    Color.White.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 2.dp, bottomEnd = 16.dp)
+                )
+                .border(
+                    1.dp,
+                    Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 2.dp, bottomEnd = 16.dp)
+                )
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.size(8.dp).scale(dot1Scale).background(Color(0xFF06B6D4), CircleShape))
+            Box(modifier = Modifier.size(8.dp).scale(dot2Scale).background(Color(0xFF06B6D4), CircleShape))
+            Box(modifier = Modifier.size(8.dp).scale(dot3Scale).background(Color(0xFF06B6D4), CircleShape))
+        }
+    }
+}
+
+@Composable
+fun VoiceInputVisualizer(micVolume: Float) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse_mic_visualizer")
+    
     val normalizedVolume = ((micVolume + 2f) / 12f).coerceIn(0f, 1f)
     val animatedVolume by animateFloatAsState(
         targetValue = normalizedVolume,
@@ -476,201 +617,84 @@ fun ListeningLayout(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2200, easing = LinearEasing),
+            animation = tween(1500, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "wave_phase"
     )
 
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
-    var textVal by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Top section with listening state
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
-        ) {
-            Spacer(modifier = Modifier.height(24.dp))
+        Canvas(modifier = Modifier.size(150.dp, 40.dp)) {
+            val width = size.width
+            val height = size.height
+            val centerY = height / 2
+            val barCount = 15
+            val barWidth = 4.dp.toPx()
+            val space = 6.dp.toPx()
             
-            // Concentrate glowing canvas waves around the mic icon
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(240.dp)
-            ) {
-                // Wave Canvas in the background
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val center = this.center
-                    val baseRadius = 52.dp.toPx()
-                    val maxRadius = 110.dp.toPx()
-                    
-                    // We draw 3 concentric glowing waves
-                    for (i in 0..2) {
-                        val waveProgress = (wavePhase + i / 3f) % 1f
-                        val volumeMultiplier = 0.3f + 0.7f * animatedVolume
-                        val currentRadius = baseRadius + waveProgress * (maxRadius - baseRadius) * volumeMultiplier
-                        
-                        // Alpha fades out as it expands
-                        val alpha = (1f - waveProgress) * 0.4f * volumeMultiplier
-                        
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0xFF06B6D4).copy(alpha = alpha),
-                                    Color(0xFF06B6D4).copy(alpha = alpha * 0.5f),
-                                    Color(0xFF06B6D4).copy(alpha = 0f)
-                                ),
-                                center = center,
-                                radius = currentRadius.coerceAtLeast(1f)
-                            ),
-                            radius = currentRadius,
-                            center = center
-                        )
-                    }
-                }
-
-                // Central Mic Circle
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .background(Color.White.copy(alpha = 0.08f), shape = CircleShape)
-                        .border(1.5.dp, Color(0xFF06B6D4).copy(alpha = 0.8f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = "Listening",
-                        tint = Color(0xFF06B6D4),
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Listening...",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFF06B6D4),
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (userSpeech.isNotBlank()) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp)),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
-                ) {
-                    Text(
-                        text = "\"$userSpeech\"",
-                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-                        color = Color.White.copy(alpha = 0.8f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            } else {
-                Text(
-                    text = "Say something like 'what is the weather?'",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.5f),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+            for (i in 0 until barCount) {
+                val distanceFromCenter = kotlin.math.abs(i - barCount / 2f) / (barCount / 2f)
+                val baseHeight = (20.dp.toPx() * (1f - distanceFromCenter)).coerceAtLeast(4.dp.toPx())
+                val phaseOffset = i * 0.3f
+                val waveFactor = kotlin.math.sin(wavePhase * 2 * kotlin.math.PI.toFloat() + phaseOffset)
+                
+                val barHeight = baseHeight * (0.3f + 0.7f * animatedVolume) * (0.8f + 0.2f * waveFactor)
+                
+                val x = (width - (barCount * barWidth + (barCount - 1) * space)) / 2 + i * (barWidth + space)
+                val y = centerY - barHeight / 2
+                
+                drawRoundRect(
+                    color = Color(0xFF06B6D4).copy(alpha = 0.8f - 0.4f * distanceFromCenter),
+                    size = androidx.compose.ui.geometry.Size(barWidth, barHeight),
+                    topLeft = androidx.compose.ui.geometry.Offset(x, y),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(barWidth / 2)
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
 
-        // Bottom section with quick actions and keyboard fallback
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Quick reply chips
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                listOf("Skip", "Read Schedule", "Exit").forEach { label ->
-                    QuickReplyChip(
-                        text = label,
-                        onClick = {
-                            onSendText(label)
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
-                        }
-                    )
-                }
-            }
+@Composable
+fun AgentSpeakingIndicator() {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse_speaking")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "speaking_scale"
+    )
 
-            // Input text field and mic button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = textVal,
-                    onValueChange = { textVal = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Type a message...", color = Color.White.copy(alpha = 0.5f)) },
-                    trailingIcon = {
-                        IconButton(
-                            onClick = {
-                                if (textVal.isNotBlank()) {
-                                    onSendText(textVal)
-                                    textVal = ""
-                                    keyboardController?.hide()
-                                    focusManager.clearFocus()
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = "Send",
-                                tint = PrimaryPurple
-                            )
-                        }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
-                    ),
-                    shape = RoundedCornerShape(24.dp),
-                    singleLine = true
-                )
-
-                IconButton(
-                    onClick = onMicClick,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .background(Color(0xFF06B6D4), shape = CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = "Start Listening",
-                        tint = Color.White
-                    )
-                }
-            }
-        }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+            contentDescription = "Speaking",
+            tint = SecondaryPink.copy(alpha = 0.8f),
+            modifier = Modifier
+                .size(20.dp)
+                .scale(scale)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Agent is speaking...",
+            style = MaterialTheme.typography.bodyMedium,
+            color = SecondaryPink.copy(alpha = 0.8f)
+        )
     }
 }
 
@@ -691,27 +715,6 @@ fun QuickReplyChip(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.9f)
-        )
-    }
-}
-
-@Composable
-fun ThinkingLayout() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(64.dp),
-            color = Color(0xFF06B6D4),
-            strokeWidth = 4.dp
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Agent is thinking...",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.White.copy(alpha = 0.7f),
-            textAlign = TextAlign.Center
         )
     }
 }

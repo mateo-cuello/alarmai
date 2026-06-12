@@ -19,6 +19,47 @@ import org.json.JSONObject
 class GeminiAgentManager(private val prefs: PreferencesManager) {
     private var chatSession: Chat? = null
 
+    private fun getSystemInstructionText(language: String, tone: String): String {
+        val now = java.util.Date()
+        return if (language == "es") {
+            val dateSdf = java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", java.util.Locale("es", "ES"))
+            val timeSdf = java.text.SimpleDateFormat("HH:mm", java.util.Locale("es", "ES"))
+            val dateStr = dateSdf.format(now)
+            val timeStr = timeSdf.format(now)
+            """
+                Eres un asistente de voz matutino cálido, servicial y enérgico.
+                Tu tarea es despertar al usuario y conversar con él.
+                Dado que tus respuestas se leerán en voz alta mediante Text-to-Speech (TTS), DEBES:
+                1. Mantener todas tus respuestas muy cortas, claras y fáciles de entender al hablar (menos de 120 palabras).
+                2. No uses formato markdown (nada de asteriscos, viñetas, títulos o emojis). Habla con oraciones normales.
+                3. Termina tus intervenciones con una pregunta amistosa y abierta para animar al usuario a responder.
+                
+                Contexto del usuario:
+                - Fecha y hora actual del usuario: $dateStr, $timeStr
+                - Copa Mundial FIFA 2026: Se está disputando en este momento (junio y julio de 2026).
+                - Estilo y tono de comunicación preferido: $tone
+            """.trimIndent()
+        } else {
+            val dateSdf = java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", java.util.Locale.US)
+            val timeSdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.US)
+            val dateStr = dateSdf.format(now)
+            val timeStr = timeSdf.format(now)
+            """
+                You are a warm, helpful, and energetic morning AI assistant. 
+                Your task is to wake the user up and converse with them.
+                Since your responses will be read out loud via Text-to-Speech (TTS), you MUST:
+                1. Keep all responses very short, clear, and easy to understand when spoken (under 120 words).
+                2. Do not use markdown (no asterisks, bullet points, headers, or emojis). Speak in plain sentences.
+                3. End your statements with a friendly, open-ended question to encourage the user to reply.
+                
+                User Context:
+                - User's current date and time: $dateStr at $timeStr
+                - FIFA World Cup 2026: Currently ongoing (June/July 2026).
+                - Preferred communication style/tone: $tone
+            """.trimIndent()
+        }
+    }
+
     suspend fun startSession(
         apiKey: String,
         weatherData: String,
@@ -46,29 +87,7 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
             val language = prefs.getLanguage()
             val tone = prefs.getTonePreference()
 
-            val systemInstructionText = if (language == "es") {
-                """
-                    Eres un asistente de voz matutino cálido, servicial y enérgico.
-                    Tu tarea es despertar al usuario y conversar con él.
-                    Dado que tus respuestas se leerán en voz alta mediante Text-to-Speech (TTS), DEBES:
-                    1. Mantener todas tus respuestas muy cortas, claras y fáciles de entender al hablar (menos de 120 palabras).
-                    2. No uses formato markdown (nada de asteriscos, viñetas, títulos o emojis). Habla con oraciones normales.
-                    3. Termina tus intervenciones con una pregunta amistosa y abierta para animar al usuario a responder.
-                    
-                    El estilo y tono de comunicación preferido por el usuario es: $tone
-                """.trimIndent()
-            } else {
-                """
-                    You are a warm, helpful, and energetic morning AI assistant. 
-                    Your task is to wake the user up and converse with them.
-                    Since your responses will be read out loud via Text-to-Speech (TTS), you MUST:
-                    1. Keep all responses very short, clear, and easy to understand when spoken (under 120 words).
-                    2. Do not use markdown (no asterisks, bullet points, headers, or emojis). Speak in plain sentences.
-                    3. End your statements with a friendly, open-ended question to encourage the user to reply.
-                    
-                    User's preferred communication style/tone: $tone
-                """.trimIndent()
-            }
+            val systemInstructionText = getSystemInstructionText(language, tone)
 
             val updateToneFunction = defineFunction(
                 name = "updateTonePreference",
@@ -142,29 +161,7 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
             val language = prefs.getLanguage()
             val tone = prefs.getTonePreference()
 
-            val systemInstructionText = if (language == "es") {
-                """
-                    Eres un asistente de voz matutino cálido, servicial y enérgico.
-                    Tu tarea es despertar al usuario y conversar con él.
-                    Dado que tus respuestas se leerán en voz alta mediante Text-to-Speech (TTS), DEBES:
-                    1. Mantener todas tus respuestas muy cortas, claras y fáciles de entender al hablar (menos de 120 palabras).
-                    2. No uses formato markdown (nada de asteriscos, viñetas, títulos o emojis). Habla con oraciones normales.
-                    3. Termina tus intervenciones con una pregunta amistosa y abierta para animar al usuario a responder.
-                    
-                    El estilo y tono de comunicación preferido por el usuario es: $tone
-                """.trimIndent()
-            } else {
-                """
-                    You are a warm, helpful, and energetic morning AI assistant. 
-                    Your task is to wake the user up and converse with them.
-                    Since your responses will be read out loud via Text-to-Speech (TTS), you MUST:
-                    1. Keep all responses very short, clear, and easy to understand when spoken (under 120 words).
-                    2. Do not use markdown (no asterisks, bullet points, headers, or emojis). Speak in plain sentences.
-                    3. End your statements with a friendly, open-ended question to encourage the user to reply.
-                    
-                    User's preferred communication style/tone: $tone
-                """.trimIndent()
-            }
+            val systemInstructionText = getSystemInstructionText(language, tone)
 
             val updateToneFunction = defineFunction(
                 name = "updateTonePreference",
@@ -207,6 +204,7 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
                     userInput.contains("clima", ignoreCase = true) || userInput.contains("tiempo", ignoreCase = true) -> "El pronóstico de hoy es soleado y agradable, alrededor de veintidós grados Celsius."
                     userInput.contains("noticias", ignoreCase = true) -> "En noticias tecnológicas, investigadores lograron avances en la eficiencia de paneles solares."
                     userInput.contains("calendario", ignoreCase = true) || userInput.contains("agenda", ignoreCase = true) -> "No tienes eventos próximos en tu calendario."
+                    userInput.contains("mundial", ignoreCase = true) || userInput.contains("copa", ignoreCase = true) || userInput.contains("partido", ignoreCase = true) -> "Hoy en el Mundial 2026 se enfrentan Canadá contra Bosnia a las tres de la tarde y Estados Unidos contra Paraguay a las seis de la tarde."
                     else -> "¡Te escucho! Estoy funcionando en modo demo, pero una vez que configures tu clave API de Gemini en los ajustes, podremos tener una conversación completa."
                 }
             } else {
@@ -214,6 +212,7 @@ class GeminiAgentManager(private val prefs: PreferencesManager) {
                     userInput.contains("weather", ignoreCase = true) -> "Today's forecast is sunny and pleasant, about twenty-two degrees Celsius."
                     userInput.contains("news", ignoreCase = true) -> "In technology news, researchers have made breakthrough progress in solar panel efficiency."
                     userInput.contains("calendar", ignoreCase = true) || userInput.contains("schedule", ignoreCase = true) -> "You have no upcoming events on your calendar."
+                    userInput.contains("world cup", ignoreCase = true) || userInput.contains("match", ignoreCase = true) || userInput.contains("game", ignoreCase = true) -> "Today in the 2026 World Cup, Canada plays Bosnia & Herzegovina at 3 PM and USA plays Paraguay at 6 PM."
                     else -> "I hear you! I'm running in demo mode, but once you set your Gemini API key in settings, we can have a full open-ended conversation about anything."
                 }
             }
