@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-12T14:51:36.001Z" hostname="INSPRION16" time="0.017">
+<testsuite name="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-12T21:06:32.101Z" hostname="INSPRION16" time="0.02">
   <properties/>
-  <testcase name="testParseMatches_noMatchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.014"/>
-  <testcase name="testParseMatches_invalidJson" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.001"/>
-  <testcase name="testParseMatches_matchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.002"/>
+  <testcase name="testParseMatches_noMatchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.009"/>
+  <testcase name="testParseMatches_realFile" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.01"/>
+  <testcase name="testParseMatches_matchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

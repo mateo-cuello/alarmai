@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-06-12T20:10:40.713Z" hostname="INSPRION16" time="0.015">
+<testsuite name="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-06-12T21:06:29.765Z" hostname="INSPRION16" time="0.017">
   <properties/>
-  <testcase name="testWeekendsOnlyAlarm_SaturdayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.013"/>
-  <testcase name="testFromReceiverRescheduling" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
-  <testcase name="testSingleShotAlarm_BeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
-  <testcase name="testWeekendsOnlyAlarm_FridayBeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
+  <testcase name="testWeekendsOnlyAlarm_SaturdayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.014"/>
+  <testcase name="testFromReceiverRescheduling" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
+  <testcase name="testSingleShotAlarm_BeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
+  <testcase name="testWeekendsOnlyAlarm_FridayBeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
   <testcase name="testWeekendsOnlyAlarm_SaturdayBeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
-  <testcase name="testWeekdaysOnlyAlarm_FridayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
-  <testcase name="testWeekendsOnlyAlarm_SundayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
+  <testcase name="testWeekdaysOnlyAlarm_FridayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
+  <testcase name="testWeekendsOnlyAlarm_SundayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
   <testcase name="testWeekdaysOnlyAlarm_Sunday" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
   <testcase name="testSingleShotAlarm_AfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>

@@ -1,2 +1,0 @@
-06-12 01:53:52.346 27224 27250 I TestRunner: started: testDefaultCoordinates(com.mateocuello.alarmai.data.local.PreferencesManagerTest)
-06-12 01:53:52.349 27224 27250 I TestRunner: finished: testDefaultCoordinates(com.mateocuello.alarmai.data.local.PreferencesManagerTest)

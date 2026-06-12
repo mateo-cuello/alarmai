@@ -5,7 +5,14 @@ import android.content.SharedPreferences
 import com.mateocuello.alarmai.data.model.Alarm
 
 class PreferencesManager(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("AlarmAIPrefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = run {
+        val storageContext = if (!context.isDeviceProtectedStorage) {
+            context.createDeviceProtectedStorageContext() ?: context
+        } else {
+            context
+        }
+        storageContext.getSharedPreferences("AlarmAIPrefs", Context.MODE_PRIVATE)
+    }
 
     companion object {
         private const val KEY_ALARM_HOUR = "alarm_hour"
