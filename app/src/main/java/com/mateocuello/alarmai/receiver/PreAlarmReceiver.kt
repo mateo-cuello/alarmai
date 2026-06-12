@@ -64,11 +64,11 @@ class PreAlarmReceiver : BroadcastReceiver() {
             val weatherRepository = WeatherRepository()
             val weatherData = weatherRepository.getWeather(lat, lon)
 
-            // 3. Fetch News
+            // 3. Fetch News (Google News RSS - no API key needed)
             val newsRepository = NewsRepository()
-            val newsKey = prefs.getNewsKey()
             val newsTopics = prefs.getNewsTopics()
-            val newsData = newsRepository.getNews(newsKey, newsTopics)
+            val language = prefs.getLanguage()
+            val newsData = newsRepository.getNews(newsTopics, language)
 
             // 4. Fetch Calendar
             val calendarRepository = CalendarRepository(context)

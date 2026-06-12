@@ -94,14 +94,21 @@ class VoiceManager(private val context: Context) {
     private fun muteBeep() {
         if (!isBeepMuted) {
             try {
-                // Try muting STREAM_SYSTEM (usually does not require permissions)
+                // Mute STREAM_MUSIC - this is where the SpeechRecognizer beep plays
+                try {
+                    audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+                } catch (e: Exception) {
+                    Log.w("VoiceManager", "Failed to mute STREAM_MUSIC: ${e.localizedMessage}")
+                }
+                
+                // Also mute STREAM_SYSTEM as fallback
                 try {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0)
                 } catch (e: Exception) {
                     Log.w("VoiceManager", "Failed to mute STREAM_SYSTEM: ${e.localizedMessage}")
                 }
                 
-                // Try muting STREAM_NOTIFICATION (might fail on newer Android versions without DND permission)
+                // Also mute STREAM_NOTIFICATION
                 try {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0)
                 } catch (e: Exception) {
@@ -119,14 +126,21 @@ class VoiceManager(private val context: Context) {
     private fun unmuteBeep() {
         if (isBeepMuted) {
             try {
-                // Try unmuting STREAM_SYSTEM
+                // Unmute STREAM_MUSIC
+                try {
+                    audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+                } catch (e: Exception) {
+                    Log.w("VoiceManager", "Failed to unmute STREAM_MUSIC: ${e.localizedMessage}")
+                }
+                
+                // Unmute STREAM_SYSTEM
                 try {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0)
                 } catch (e: Exception) {
                     Log.w("VoiceManager", "Failed to unmute STREAM_SYSTEM: ${e.localizedMessage}")
                 }
                 
-                // Try unmuting STREAM_NOTIFICATION
+                // Unmute STREAM_NOTIFICATION
                 try {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0)
                 } catch (e: Exception) {
@@ -134,7 +148,7 @@ class VoiceManager(private val context: Context) {
                 }
                 
                 isBeepMuted = false
-                Log.d("VoiceManager", "Unmuted streams after speech recognition beep")
+                Log.d("VoiceManager", "Unmuted streams after speech recognition")
             } catch (e: Exception) {
                 Log.e("VoiceManager", "Failed to unmute streams: ${e.localizedMessage}")
             }
@@ -204,6 +218,8 @@ class VoiceManager(private val context: Context) {
         isTtsActive = true
         ttsCompleteCallback = {
             isTtsActive = false
+            // Explicitly stop TTS engine to fully release audio resources
+            tts?.stop()
             checkAndAbandonFocus()
             onComplete()
         }
@@ -228,7 +244,12 @@ class VoiceManager(private val context: Context) {
                 requestAudioFocus()
                 isListeningActive = true
 
+                // Mute beep BEFORE creating the recognizer to catch initialization sounds
                 muteBeep()
+                
+                // Small delay to let mute take effect
+                android.os.SystemClock.sleep(50)
+                
                 speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
 
                 val language = prefs.getLanguage()

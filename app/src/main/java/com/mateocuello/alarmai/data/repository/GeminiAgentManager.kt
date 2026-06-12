@@ -87,6 +87,14 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                 - Copa Mundial FIFA 2026: Se está disputando en este momento (junio y julio de 2026).
                 - Estilo y tono de comunicación preferido: $tone
                 
+                HERRAMIENTAS DISPONIBLES:
+                - Tienes acceso a Google Search para buscar información en tiempo real sobre cualquier tema.
+                - Tienes herramientas para consultar el fixture del Mundial 2026 (getWorldCupMatchesForDate y getWorldCupMatchesByTeam).
+                - Tienes una herramienta para buscar noticias actuales (searchNews).
+                - DEBES usar getWorldCupMatchesForDate o getWorldCupMatchesByTeam para CUALQUIER pregunta sobre partidos del Mundial. NUNCA adivines ni uses tu memoria interna para partidos.
+                - Para noticias actualizadas, usa la herramienta searchNews.
+                - Para cualquier otra información actual (clima, eventos, datos), usa Google Search.
+                
                 $worldCupContext
             """.trimIndent()
         } else {
@@ -106,6 +114,14 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                 - User's current date and time: $dateStr at $timeStr
                 - FIFA World Cup 2026: Currently ongoing (June/July 2026).
                 - Preferred communication style/tone: $tone
+                
+                AVAILABLE TOOLS:
+                - You have access to Google Search for real-time information on any topic.
+                - You have tools to query the 2026 World Cup fixture (getWorldCupMatchesForDate and getWorldCupMatchesByTeam).
+                - You have a tool to search current news headlines (searchNews).
+                - You MUST use getWorldCupMatchesForDate or getWorldCupMatchesByTeam for ANY question about World Cup matches. NEVER guess or use your internal memory for match information.
+                - For current news, use the searchNews tool.
+                - For any other current information (weather, events, facts), use Google Search.
                 
                 $worldCupContext
             """.trimIndent()
@@ -277,7 +293,11 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
     private suspend fun callGeminiAndHandleFunctions(session: CustomChatSession): Content {
         val url = "https://generativelanguage.googleapis.com/v1beta/models/${session.modelName}:generateContent?key=${session.apiKey}"
 
-        while (true) {
+        var iterations = 0
+        val maxIterations = 10 // Safety limit to prevent infinite loops
+
+        while (iterations < maxIterations) {
+            iterations++
             val requestBody = buildRequestBody(session.history, session.systemInstructionText)
             val responseJson = makePostRequest(url, requestBody.toString())
             val responseContent = parseResponseContent(responseJson) ?: throw Exception("Failed to parse response")
@@ -308,13 +328,36 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                     val repo = WorldCupRepository()
                     val summary = repo.getTodayMatchesSummary(context, dateString)
                     responseParts.add(FunctionResponsePart(name, mapOf("summary" to summary)))
+                } else if (name.endsWith("getWorldCupMatchesByTeam")) {
+                    val teamName = functionCall.args["teamName"]?.toString()
+                        ?: functionCall.args["team_name"]?.toString()
+                        ?: functionCall.args["team"]?.toString()
+                        ?: ""
+                    val repo = WorldCupRepository()
+                    val summary = repo.getMatchesByTeam(context, teamName)
+                    responseParts.add(FunctionResponsePart(name, mapOf("summary" to summary)))
+                } else if (name.endsWith("searchNews")) {
+                    val query = functionCall.args["query"]?.toString()
+                        ?: functionCall.args["topic"]?.toString()
+                        ?: ""
+                    val lang = functionCall.args["language"]?.toString()
+                        ?: prefs.getLanguage()
+                    val newsRepo = NewsRepository()
+                    val result = newsRepo.searchNewsByQuery(query, lang)
+                    responseParts.add(FunctionResponsePart(name, mapOf("results" to result)))
                 }
             }
 
             // Add function response as user turn containing FunctionResponseParts
-            val toolResponseContent = Content("user", responseParts)
-            session.history.add(toolResponseContent)
+            if (responseParts.isNotEmpty()) {
+                val toolResponseContent = Content("user", responseParts)
+                session.history.add(toolResponseContent)
+            }
         }
+
+        // If we reach max iterations, return the last response
+        return session.history.lastOrNull { it.role == "model" }
+            ?: Content("model", listOf(TextPart("I'm having trouble processing your request. Can you try again?")))
     }
 
     internal fun contentToJson(content: Content): JSONObject {
@@ -391,6 +434,7 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                 }
                 parts.add(FunctionCallPart(name, args, thoughtSignature))
             }
+            // Skip unknown part types (e.g., googleSearch grounding results) gracefully
         }
         return Content(role, parts)
     }
@@ -416,6 +460,8 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
 
         // Tools
         val toolsArray = JSONArray()
+
+        // Tool 1: Custom function declarations
         val toolObject = JSONObject()
         val functionDeclarations = JSONArray()
 
@@ -439,13 +485,13 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
         // getWorldCupMatchesForDate
         val getWorldCupMatches = JSONObject().apply {
             put("name", "getWorldCupMatchesForDate")
-            put("description", "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.")
+            put("description", "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date. You MUST call this tool whenever the user asks about World Cup matches for today, tomorrow, yesterday, or any specific date. Pass the date in yyyy-MM-dd format. Use 'today' for today's date, 'tomorrow' for tomorrow, 'yesterday' for yesterday.")
             put("parameters", JSONObject().apply {
                 put("type", "object")
                 put("properties", JSONObject().apply {
                     put("dateString", JSONObject().apply {
                         put("type", "string")
-                        put("description", "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)")
+                        put("description", "The date to query. Can be 'today', 'tomorrow', 'yesterday', or a date in yyyy-MM-dd format (e.g. 2026-06-12)")
                     })
                 })
                 put("required", JSONArray().put("dateString"))
@@ -453,8 +499,53 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
         }
         functionDeclarations.put(getWorldCupMatches)
 
+        // getWorldCupMatchesByTeam
+        val getWorldCupMatchesByTeam = JSONObject().apply {
+            put("name", "getWorldCupMatchesByTeam")
+            put("description", "Retrieves ALL scheduled FIFA World Cup 2026 matches for a specific team (all dates). You MUST call this tool when the user asks when a team plays, their schedule, their next match, or any team-specific World Cup question.")
+            put("parameters", JSONObject().apply {
+                put("type", "object")
+                put("properties", JSONObject().apply {
+                    put("teamName", JSONObject().apply {
+                        put("type", "string")
+                        put("description", "The team name to search for (e.g. 'Argentina', 'Brazil', 'USA', 'Mexico', 'England')")
+                    })
+                })
+                put("required", JSONArray().put("teamName"))
+            })
+        }
+        functionDeclarations.put(getWorldCupMatchesByTeam)
+
+        // searchNews
+        val searchNews = JSONObject().apply {
+            put("name", "searchNews")
+            put("description", "Searches for the latest real-time news headlines on a specific topic or query. Use this when the user asks about current events, news, or what's happening on any topic.")
+            put("parameters", JSONObject().apply {
+                put("type", "object")
+                put("properties", JSONObject().apply {
+                    put("query", JSONObject().apply {
+                        put("type", "string")
+                        put("description", "The news topic or search query (e.g. 'Argentina economy', 'technology news', 'climate change')")
+                    })
+                    put("language", JSONObject().apply {
+                        put("type", "string")
+                        put("description", "Language code: 'es' for Spanish or 'en' for English. Defaults to user's language.")
+                    })
+                })
+                put("required", JSONArray().put("query"))
+            })
+        }
+        functionDeclarations.put(searchNews)
+
         toolObject.put("functionDeclarations", functionDeclarations)
         toolsArray.put(toolObject)
+
+        // Tool 2: Google Search grounding (built-in Gemini capability)
+        val googleSearchTool = JSONObject().apply {
+            put("google_search", JSONObject())
+        }
+        toolsArray.put(googleSearchTool)
+
         body.put("tools", toolsArray)
 
         return body

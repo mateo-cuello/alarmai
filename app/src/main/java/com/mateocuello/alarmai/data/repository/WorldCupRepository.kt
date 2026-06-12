@@ -132,4 +132,168 @@ class WorldCupRepository {
         }
         return sb.toString().trim()
     }
+
+    /**
+     * Searches all World Cup matches for a specific team.
+     * Supports common name aliases (e.g., "Estados Unidos" -> "USA").
+     */
+    fun getMatchesByTeam(context: Context, teamName: String): String {
+        val normalizedTeam = normalizeTeamName(teamName)
+        
+        return try {
+            val jsonString = context.assets.open("worldcup_2026.json").use { inputStream ->
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    reader.readText()
+                }
+            }
+            
+            val allMatches = parseAllMatches(jsonString)
+            val teamMatches = allMatches.filter { match ->
+                match.team1.contains(normalizedTeam, ignoreCase = true) ||
+                match.team2.contains(normalizedTeam, ignoreCase = true)
+            }
+            
+            if (teamMatches.isEmpty()) {
+                "No matches found for team '$teamName' in the 2026 World Cup fixture."
+            } else {
+                val sb = StringBuilder()
+                sb.append("FIFA World Cup 2026 matches for $teamName:\n")
+                teamMatches.forEach { match ->
+                    val groupInfo = if (match.group != null) " (${match.group})" else ""
+                    sb.append("- ${match.date}: ${match.round}$groupInfo: ${match.team1} vs ${match.team2} at ${match.time} in ${match.ground}\n")
+                }
+                sb.toString().trim()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            "Error searching for team '$teamName': ${e.localizedMessage}"
+        }
+    }
+
+    /**
+     * Parses ALL matches from the JSON (not filtered by date).
+     */
+    private fun parseAllMatches(jsonString: String): List<WorldCupMatch> {
+        val matches = mutableListOf<WorldCupMatch>()
+        try {
+            val matchRegex = Regex("""\{([^}]+)}""")
+            val matchesFound = matchRegex.findAll(jsonString)
+            
+            for (matchResult in matchesFound) {
+                val matchBody = matchResult.groupValues[1]
+                
+                val date = parseJsonField(matchBody, "date") ?: continue
+                val round = parseJsonField(matchBody, "round") ?: ""
+                val time = parseJsonField(matchBody, "time") ?: ""
+                val team1 = parseJsonField(matchBody, "team1") ?: ""
+                val team2 = parseJsonField(matchBody, "team2") ?: ""
+                val group = parseJsonField(matchBody, "group")
+                val ground = parseJsonField(matchBody, "ground") ?: ""
+                
+                matches.add(
+                    WorldCupMatch(
+                        round = round,
+                        date = date,
+                        time = time,
+                        team1 = team1,
+                        team2 = team2,
+                        group = group,
+                        ground = ground
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return matches
+    }
+
+    /**
+     * Normalizes team names to match the fixture data.
+     * Handles common aliases and Spanish names.
+     */
+    private fun normalizeTeamName(name: String): String {
+        val trimmed = name.trim()
+        val aliases = mapOf(
+            "estados unidos" to "USA",
+            "eeuu" to "USA",
+            "ee.uu." to "USA",
+            "united states" to "USA",
+            "america" to "USA",
+            "eeuu" to "USA",
+            "brasil" to "Brazil",
+            "alemania" to "Germany",
+            "francia" to "France",
+            "españa" to "Spain",
+            "inglaterra" to "England",
+            "paises bajos" to "Netherlands",
+            "países bajos" to "Netherlands",
+            "holanda" to "Netherlands",
+            "holland" to "Netherlands",
+            "corea del sur" to "South Korea",
+            "corea" to "South Korea",
+            "south korea" to "South Korea",
+            "korea" to "South Korea",
+            "suiza" to "Switzerland",
+            "marruecos" to "Morocco",
+            "belgica" to "Belgium",
+            "bélgica" to "Belgium",
+            "suecia" to "Sweden",
+            "tunez" to "Tunisia",
+            "túnez" to "Tunisia",
+            "croacia" to "Croatia",
+            "japon" to "Japan",
+            "japón" to "Japan",
+            "turquia" to "Turkey",
+            "turquía" to "Turkey",
+            "noruega" to "Norway",
+            "sudafrica" to "South Africa",
+            "sudáfrica" to "South Africa",
+            "republica checa" to "Czech Republic",
+            "república checa" to "Czech Republic",
+            "costa de marfil" to "Ivory Coast",
+            "haiti" to "Haiti",
+            "haití" to "Haiti",
+            "escocia" to "Scotland",
+            "canada" to "Canada",
+            "canadá" to "Canada",
+            "nueva zelanda" to "New Zealand",
+            "nueva zelandia" to "New Zealand",
+            "cabo verde" to "Cape Verde",
+            "arabia saudita" to "Saudi Arabia",
+            "argeliaa" to "Algeria",
+            "argelia" to "Algeria",
+            "jordania" to "Jordan",
+            "austria" to "Austria",
+            "irak" to "Iraq",
+            "irán" to "Iran",
+            "iran" to "Iran",
+            "ghana" to "Ghana",
+            "panamá" to "Panama",
+            "panama" to "Panama",
+            "senegal" to "Senegal",
+            "rd congo" to "DR Congo",
+            "rep. dem. congo" to "DR Congo",
+            "uzbekistan" to "Uzbekistan",
+            "uzbekistán" to "Uzbekistan",
+            "egipto" to "Egypt",
+            "curazao" to "Curaçao",
+            "curacao" to "Curaçao",
+            "bosnia" to "Bosnia & Herzegovina",
+            "bosnia y herzegovina" to "Bosnia & Herzegovina",
+            "bosnia and herzegovina" to "Bosnia & Herzegovina",
+            "qatar" to "Qatar",
+            "catar" to "Qatar",
+            "ecuador" to "Ecuador",
+            "colombia" to "Colombia",
+            "portugal" to "Portugal",
+            "uruguay" to "Uruguay",
+            "mexico" to "Mexico",
+            "méxico" to "Mexico",
+            "paraguay" to "Paraguay",
+            "argentina" to "Argentina"
+        )
+        return aliases[trimmed.lowercase()] ?: trimmed
+    }
 }
+

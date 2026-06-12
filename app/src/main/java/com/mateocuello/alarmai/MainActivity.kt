@@ -86,7 +86,6 @@ fun MainScreen(viewModel: MainViewModel) {
     val alarm by viewModel.alarm.collectAsState()
     val geminiKey by viewModel.geminiKey.collectAsState()
     val geminiModel by viewModel.geminiModel.collectAsState()
-    val newsKey by viewModel.newsKey.collectAsState()
     val newsTopics by viewModel.newsTopics.collectAsState()
     val alarmVolume by viewModel.alarmVolume.collectAsState()
     val alarmRingtoneUri by viewModel.alarmRingtoneUri.collectAsState()
@@ -96,7 +95,6 @@ fun MainScreen(viewModel: MainViewModel) {
     val availableVoices by viewModel.availableVoices.collectAsState()
 
     var showGeminiPassword by remember { mutableStateOf(false) }
-    var showNewsPassword by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
 
@@ -693,41 +691,19 @@ fun MainScreen(viewModel: MainViewModel) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // News API Key
-                OutlinedTextField(
-                    value = newsKey,
-                    onValueChange = { viewModel.saveNewsKey(it) },
-                    label = { Text("NewsAPI Key (Optional)") },
-                    placeholder = { Text("Enter NewsAPI.org key") },
-                    singleLine = true,
-                    visualTransformation = if (showNewsPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { showNewsPassword = !showNewsPassword }) {
-                            Icon(
-                                imageVector = if (showNewsPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = "Toggle Visibility",
-                                tint = Color.White.copy(alpha = 0.6f)
-                            )
-                        }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SecondaryPink.copy(alpha = 0.8f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedLabelColor = SecondaryPink,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedContainerColor = Color.White.copy(alpha = 0.04f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.02f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 // News Topics
+                Text(
+                    text = "News Topics",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+                Text(
+                    text = "Headlines from Google News (no API key needed)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
+                )
                 OutlinedTextField(
                     value = newsTopics,
                     onValueChange = { viewModel.saveNewsTopics(it) },

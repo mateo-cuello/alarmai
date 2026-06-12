@@ -48,6 +48,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val voiceManager = VoiceManager(application)
 
     private var noSpeechTimeoutJob: kotlinx.coroutines.Job? = null
+    private var consecutiveSttErrors = 0
 
     private val _geminiModelName = MutableStateFlow(prefs.getGeminiModel())
     val geminiModelName: StateFlow<String> = _geminiModelName
@@ -140,9 +141,9 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
                 _statusMessage.value = if (isEs) "Obteniendo clima y noticias..." else "Fetching weather & news..."
                 val weatherData = weatherRepository.getWeather(lat, lon)
                 
-                val newsKey = prefs.getNewsKey()
                 val newsTopics = prefs.getNewsTopics()
-                val newsData = newsRepository.getNews(newsKey, newsTopics)
+                val language = prefs.getLanguage()
+                val newsData = newsRepository.getNews(newsTopics, language)
                 
                 _statusMessage.value = if (isEs) "Leyendo agenda de hoy..." else "Reading today's schedule..."
                 val calendarData = calendarRepository.getTodayEvents()
@@ -199,8 +200,12 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         _micVolume.value = 0f
         
         voiceManager.speak(text) {
-            // Callback when agent finishes speaking: start listening automatically!
-            startListeningForUser()
+            // Callback when agent finishes speaking: add delay to let TTS fully release audio
+            viewModelScope.launch {
+                voiceManager.stopSpeaking()
+                kotlinx.coroutines.delay(600)
+                startListeningForUser()
+            }
         }
     }
 
@@ -213,19 +218,27 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         voiceManager.startListening(
             onResult = { result ->
                 cancelNoSpeechTimeout()
+                consecutiveSttErrors = 0 // Reset on success
                 _userSpeech.value = result
                 _micVolume.value = 0f
                 processUserSpeech(result)
             },
             onError = { error ->
-                Log.e("AlarmViewModel", "STT Error: $error")
+                Log.e("AlarmViewModel", "STT Error ($consecutiveSttErrors): $error")
                 _micVolume.value = 0f
-                // Continuous listening: silently restart listening after a short delay
-                viewModelScope.launch {
-                    kotlinx.coroutines.delay(500)
-                    if (_uiState.value == AlarmState.LISTENING) {
-                        startListeningForUser()
+                consecutiveSttErrors++
+                if (consecutiveSttErrors < 5 && _uiState.value == AlarmState.LISTENING) {
+                    // Retry with increasing delay to avoid spamming the recognizer
+                    viewModelScope.launch {
+                        val delay = 800L + (consecutiveSttErrors * 400L)
+                        kotlinx.coroutines.delay(delay)
+                        if (_uiState.value == AlarmState.LISTENING) {
+                            startListeningForUser()
+                        }
                     }
+                } else {
+                    Log.w("AlarmViewModel", "STT max retries reached, staying in LISTENING state")
+                    // Stop retrying to avoid infinite loop, user can tap mic to restart
                 }
             },
             onRmsChanged = { rmsdB ->
@@ -237,6 +250,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     fun startListeningManual() {
         voiceManager.stopSpeaking()
         voiceManager.stopListening()
+        consecutiveSttErrors = 0 // Reset on manual retry
         _micVolume.value = 0f
         startListeningForUser()
     }

@@ -58,9 +58,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _availableVoices.value = voices
     }
 
-    private val _newsKey = MutableStateFlow(prefs.getNewsKey())
-    val newsKey: StateFlow<String> = _newsKey
-
     private val _newsTopics = MutableStateFlow(prefs.getNewsTopics())
     val newsTopics: StateFlow<String> = _newsTopics
 
@@ -111,11 +108,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun saveGeminiModel(model: String) {
         prefs.saveGeminiModel(model)
         _geminiModel.value = model
-    }
-
-    fun saveNewsKey(key: String) {
-        prefs.saveNewsKey(key)
-        _newsKey.value = key
     }
 
     fun saveNewsTopics(topics: String) {
