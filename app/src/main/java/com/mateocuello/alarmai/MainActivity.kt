@@ -86,7 +86,6 @@ fun MainScreen(viewModel: MainViewModel) {
     val context = LocalContext.current
     val alarm by viewModel.alarm.collectAsState()
     val geminiKey by viewModel.geminiKey.collectAsState()
-    val geminiModel by viewModel.geminiModel.collectAsState()
     val newsTopics by viewModel.newsTopics.collectAsState()
     val alarmVolume by viewModel.alarmVolume.collectAsState()
     val alarmRingtoneUri by viewModel.alarmRingtoneUri.collectAsState()
@@ -650,51 +649,6 @@ fun MainScreen(viewModel: MainViewModel) {
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Gemini Model Selection
-                Text(
-                    text = "Gemini LLM Model",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.6f)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val models = listOf(
-                        "gemini-2.5-flash" to "Gemini 2.5 Flash"
-                    )
-                    models.forEach { (modelId, displayName) ->
-                        val isSelected = geminiModel == modelId
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
-                                .background(
-                                    color = if (isSelected) PrimaryPurple else Color.White.copy(alpha = 0.05f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) SecondaryPink else Color.White.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .clickable {
-                                    viewModel.saveGeminiModel(modelId)
-                                }
-                        ) {
-                            Text(
-                                text = displayName,
-                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-                }
 
                 // News Topics
                 Text(

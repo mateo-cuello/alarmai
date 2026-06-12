@@ -88,12 +88,10 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                 - Estilo y tono de comunicación preferido: $tone
                 
                 HERRAMIENTAS DISPONIBLES:
-                - Tienes acceso a Google Search para buscar información en tiempo real sobre cualquier tema.
                 - Tienes herramientas para consultar el fixture del Mundial 2026 (getWorldCupMatchesForDate y getWorldCupMatchesByTeam).
                 - Tienes una herramienta para buscar noticias actuales (searchNews).
                 - DEBES usar getWorldCupMatchesForDate o getWorldCupMatchesByTeam para CUALQUIER pregunta sobre partidos del Mundial. NUNCA adivines ni uses tu memoria interna para partidos.
-                - Para noticias actualizadas, usa la herramienta searchNews.
-                - Para cualquier otra información actual (clima, eventos, datos), usa Google Search.
+                - Para noticias actualizadas o información sobre eventos actuales, usa la herramienta searchNews.
                 
                 $worldCupContext
             """.trimIndent()
@@ -116,12 +114,10 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                 - Preferred communication style/tone: $tone
                 
                 AVAILABLE TOOLS:
-                - You have access to Google Search for real-time information on any topic.
                 - You have tools to query the 2026 World Cup fixture (getWorldCupMatchesForDate and getWorldCupMatchesByTeam).
                 - You have a tool to search current news headlines (searchNews).
                 - You MUST use getWorldCupMatchesForDate or getWorldCupMatchesByTeam for ANY question about World Cup matches. NEVER guess or use your internal memory for match information.
-                - For current news, use the searchNews tool.
-                - For any other current information (weather, events, facts), use Google Search.
+                - For current news or headlines, use the searchNews tool.
                 
                 $worldCupContext
             """.trimIndent()
@@ -539,12 +535,6 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
 
         toolObject.put("functionDeclarations", functionDeclarations)
         toolsArray.put(toolObject)
-
-        // Tool 2: Google Search grounding (built-in Gemini capability)
-        val googleSearchTool = JSONObject().apply {
-            put("googleSearch", JSONObject())
-        }
-        toolsArray.put(googleSearchTool)
 
         body.put("tools", toolsArray)
 
