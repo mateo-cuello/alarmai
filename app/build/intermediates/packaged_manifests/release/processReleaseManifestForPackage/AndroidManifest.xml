@@ -8,6 +8,12 @@
         android:minSdkVersion="26"
         android:targetSdkVersion="34" />
 
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission
@@ -68,6 +74,12 @@
         <!-- Broadcast Receiver for Alarms -->
         <receiver
             android:name="com.mateocuello.alarmai.receiver.AlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Broadcast Receiver for Pre-Alarm Prefetching -->
+        <receiver
+            android:name="com.mateocuello.alarmai.receiver.PreAlarmReceiver"
             android:enabled="true"
             android:exported="false" />
 

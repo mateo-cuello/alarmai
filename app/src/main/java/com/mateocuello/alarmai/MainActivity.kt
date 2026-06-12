@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings as SettingsIcon
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -88,6 +89,10 @@ fun MainScreen(viewModel: MainViewModel) {
     val newsTopics by viewModel.newsTopics.collectAsState()
     val alarmVolume by viewModel.alarmVolume.collectAsState()
     val alarmRingtoneUri by viewModel.alarmRingtoneUri.collectAsState()
+    val language by viewModel.language.collectAsState()
+    val voiceName by viewModel.voiceName.collectAsState()
+    val tonePreference by viewModel.tonePreference.collectAsState()
+    val availableVoices by viewModel.availableVoices.collectAsState()
 
     var showGeminiPassword by remember { mutableStateOf(false) }
     var showNewsPassword by remember { mutableStateOf(false) }
@@ -407,6 +412,175 @@ fun MainScreen(viewModel: MainViewModel) {
                         textAlign = TextAlign.Center
                     )
                 }
+            }
+        }
+
+        // 1.75 Assistant Persona & Voice Settings Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Translate,
+                        contentDescription = "Voice & Language Settings",
+                        tint = PrimaryPurple,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Assistant Persona & Voice",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Assistant Language Selector
+                Text(
+                    text = "Assistant Language",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val langs = listOf(
+                        "es" to "Español",
+                        "en" to "English"
+                    )
+                    langs.forEach { (langId, displayName) ->
+                        val isSelected = language == langId
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .background(
+                                    color = if (isSelected) PrimaryPurple else Color.White.copy(alpha = 0.05f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isSelected) SecondaryPink else Color.White.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable {
+                                    viewModel.saveLanguage(langId)
+                                }
+                        ) {
+                            Text(
+                                text = displayName,
+                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // TTS Voice Selector
+                Text(
+                    text = "Text-to-Speech Voice",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                var expandedVoices by remember { mutableStateOf(false) }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Button(
+                        onClick = { expandedVoices = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                    ) {
+                        val voiceDisplay = if (voiceName.isEmpty()) "System Default Voice" else voiceName.substringAfterLast(".").take(25)
+                        Text(
+                            text = voiceDisplay,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expandedVoices,
+                        onDismissRequest = { expandedVoices = false },
+                        modifier = Modifier
+                            .fillMaxWidth(0.85f)
+                            .background(Color(0xFF1E1B4B))
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("System Default Voice", color = Color.White) },
+                            onClick = {
+                                viewModel.saveVoiceName("")
+                                expandedVoices = false
+                            }
+                        )
+                        availableVoices.forEach { voice ->
+                            DropdownMenuItem(
+                                text = { Text(voice.substringAfterLast("."), color = Color.White) },
+                                onClick = {
+                                    viewModel.saveVoiceName(voice)
+                                    expandedVoices = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Tone Preference Textbox
+                Text(
+                    text = "Tone & Communication Style",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = tonePreference,
+                    onValueChange = { viewModel.saveTonePreference(it) },
+                    placeholder = { Text("e.g. Sarcastic and funny, warm and energetic, formal and brief...") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = PrimaryPurple,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        focusedContainerColor = Color.White.copy(alpha = 0.05f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
+                        focusedLabelColor = PrimaryPurple,
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.4f)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Note: The AI agent can modify this text box dynamically if you request a tone change during the chat.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.4f)
+                )
             }
         }
 

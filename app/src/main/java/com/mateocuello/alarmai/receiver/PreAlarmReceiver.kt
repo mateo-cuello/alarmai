@@ -81,7 +81,7 @@ class PreAlarmReceiver : BroadcastReceiver() {
             val worldCupData = worldCupRepository.getTodayMatchesSummary(context, todayDateString)
 
             // 6. Build initial prompt and call Gemini
-            val geminiAgentManager = GeminiAgentManager()
+            val geminiAgentManager = GeminiAgentManager(prefs)
             val geminiKey = prefs.getGeminiKey()
             val modelName = prefs.getGeminiModel()
 

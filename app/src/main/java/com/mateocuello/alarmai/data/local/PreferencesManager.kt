@@ -23,6 +23,9 @@ class PreferencesManager(context: Context) {
         private const val KEY_PREFETCHED_BRIEFING = "prefetched_briefing"
         private const val KEY_PREFETCHED_PROMPT = "prefetched_prompt"
         private const val KEY_PREFETCHED_TIMESTAMP = "prefetched_timestamp"
+        private const val KEY_LANGUAGE = "assistant_language"
+        private const val KEY_VOICE_NAME = "assistant_voice_name"
+        private const val KEY_TONE_PREFERENCE = "assistant_tone_preference"
     }
 
     fun saveAlarm(alarm: Alarm) {
@@ -135,5 +138,29 @@ class PreferencesManager(context: Context) {
             .remove(KEY_PREFETCHED_PROMPT)
             .remove(KEY_PREFETCHED_TIMESTAMP)
             .apply()
+    }
+
+    fun saveLanguage(language: String) {
+        prefs.edit().putString(KEY_LANGUAGE, language).apply()
+    }
+
+    fun getLanguage(): String {
+        return prefs.getString(KEY_LANGUAGE, "es") ?: "es"
+    }
+
+    fun saveVoiceName(voiceName: String) {
+        prefs.edit().putString(KEY_VOICE_NAME, voiceName).apply()
+    }
+
+    fun getVoiceName(): String {
+        return prefs.getString(KEY_VOICE_NAME, "") ?: ""
+    }
+
+    fun saveTonePreference(tone: String) {
+        prefs.edit().putString(KEY_TONE_PREFERENCE, tone).apply()
+    }
+
+    fun getTonePreference(): String {
+        return prefs.getString(KEY_TONE_PREFERENCE, "warm, helpful, and energetic") ?: "warm, helpful, and energetic"
     }
 }

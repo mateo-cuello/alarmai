@@ -8,6 +8,12 @@
         android:minSdkVersion="26"
         android:targetSdkVersion="34" />
 
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission

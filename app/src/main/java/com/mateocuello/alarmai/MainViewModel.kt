@@ -21,6 +21,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _geminiModel = MutableStateFlow(prefs.getGeminiModel())
     val geminiModel: StateFlow<String> = _geminiModel
 
+    private val _language = MutableStateFlow(prefs.getLanguage())
+    val language: StateFlow<String> = _language
+
+    private val _voiceName = MutableStateFlow(prefs.getVoiceName())
+    val voiceName: StateFlow<String> = _voiceName
+
+    private val _tonePreference = MutableStateFlow(prefs.getTonePreference())
+    val tonePreference: StateFlow<String> = _tonePreference
+
+    private var tempTts: android.speech.tts.TextToSpeech? = null
+    private val _availableVoices = MutableStateFlow<List<String>>(emptyList())
+    val availableVoices: StateFlow<List<String>> = _availableVoices
+
+    init {
+        loadVoicesForLanguage(prefs.getLanguage())
+    }
+
+    fun loadVoicesForLanguage(lang: String) {
+        if (tempTts == null) {
+            tempTts = android.speech.tts.TextToSpeech(getApplication()) { status ->
+                if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                    updateVoicesList(lang)
+                }
+            }
+        } else {
+            updateVoicesList(lang)
+        }
+    }
+
+    private fun updateVoicesList(lang: String) {
+        val targetLocale = if (lang == "es") java.util.Locale("es") else java.util.Locale.US
+        val voices = tempTts?.voices?.filter {
+            it.locale.language.equals(targetLocale.language, ignoreCase = true)
+        }?.map { it.name }?.sorted() ?: emptyList()
+        _availableVoices.value = voices
+    }
+
     private val _newsKey = MutableStateFlow(prefs.getNewsKey())
     val newsKey: StateFlow<String> = _newsKey
 
@@ -94,5 +131,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun saveAlarmRingtoneUri(uri: String) {
         prefs.saveAlarmRingtoneUri(uri)
         _alarmRingtoneUri.value = uri
+    }
+
+    fun saveLanguage(language: String) {
+        prefs.saveLanguage(language)
+        _language.value = language
+        loadVoicesForLanguage(language)
+    }
+
+    fun saveVoiceName(voiceName: String) {
+        prefs.saveVoiceName(voiceName)
+        _voiceName.value = voiceName
+    }
+
+    fun saveTonePreference(tone: String) {
+        prefs.saveTonePreference(tone)
+        _tonePreference.value = tone
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        tempTts?.shutdown()
     }
 }

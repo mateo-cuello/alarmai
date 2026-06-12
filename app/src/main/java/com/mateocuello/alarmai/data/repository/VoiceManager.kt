@@ -12,9 +12,11 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
+import com.mateocuello.alarmai.data.local.PreferencesManager
 import java.util.Locale
 
 class VoiceManager(private val context: Context) {
+    private val prefs = PreferencesManager(context)
     private var tts: TextToSpeech? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var isTtsInitialized = false
@@ -94,10 +96,19 @@ class VoiceManager(private val context: Context) {
     private fun initTts() {
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                val result = tts?.setLanguage(Locale.getDefault())
+                val language = prefs.getLanguage()
+                val locale = if (language == "es") Locale("es", "ES") else Locale.US
+                val result = tts?.setLanguage(locale)
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                     Log.e("VoiceManager", "Language not supported")
                 } else {
+                    val savedVoice = prefs.getVoiceName()
+                    if (savedVoice.isNotEmpty()) {
+                        val voice = tts?.voices?.find { it.name == savedVoice }
+                        if (voice != null) {
+                            tts?.voice = voice
+                        }
+                    }
                     isTtsInitialized = true
                     setupTtsListener()
                 }
@@ -167,9 +178,13 @@ class VoiceManager(private val context: Context) {
 
                 speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
 
+                val language = prefs.getLanguage()
+                val locale = if (language == "es") Locale("es", "ES") else Locale.US
                 val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.toLanguageTag())
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale.toLanguageTag())
+                    putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, locale.toLanguageTag())
                     putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
                 }
 

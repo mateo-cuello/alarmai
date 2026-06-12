@@ -34,10 +34,10 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val weatherRepository = WeatherRepository()
     private val newsRepository = NewsRepository()
     private val calendarRepository = CalendarRepository(application)
-    private val geminiAgentManager = GeminiAgentManager()
+    private val geminiAgentManager = GeminiAgentManager(prefs)
     private val voiceManager = VoiceManager(application)
 
-    private var consecutiveSttErrors = 0
+    private var noSpeechTimeoutJob: kotlinx.coroutines.Job? = null
 
     private val _geminiModelName = MutableStateFlow(prefs.getGeminiModel())
     val geminiModelName: StateFlow<String> = _geminiModelName
@@ -106,31 +106,32 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 Log.d("AlarmViewModel", "No valid prefetched briefing. Loading on demand.")
                 // 2. Fetch data & start AI agent
+                val isEs = prefs.getLanguage() == "es"
                 _uiState.value = AlarmState.FETCHING_DATA
-                _statusMessage.value = "Detecting location..."
+                _statusMessage.value = if (isEs) "Detectando ubicación..." else "Detecting location..."
                 
                 // Get location coordinates (either pre-fetched or fetch on demand)
                 val (lat, lon) = prefetchedLocation
                     ?: locationProvider.getCurrentLocation()?.also { prefs.saveLocation(it.first, it.second) }
                     ?: prefs.getLocation()
                 
-                _statusMessage.value = "Fetching weather & news..."
+                _statusMessage.value = if (isEs) "Obteniendo clima y noticias..." else "Fetching weather & news..."
                 val weatherData = weatherRepository.getWeather(lat, lon)
                 
                 val newsKey = prefs.getNewsKey()
                 val newsTopics = prefs.getNewsTopics()
                 val newsData = newsRepository.getNews(newsKey, newsTopics)
                 
-                _statusMessage.value = "Reading today's schedule..."
+                _statusMessage.value = if (isEs) "Leyendo agenda de hoy..." else "Reading today's schedule..."
                 val calendarData = calendarRepository.getTodayEvents()
                 
-                _statusMessage.value = "Checking World Cup matches..."
+                _statusMessage.value = if (isEs) "Buscando partidos del Mundial..." else "Checking World Cup matches..."
                 val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
                 val todayDateString = sdf.format(java.util.Date())
                 val worldCupRepository = com.mateocuello.alarmai.data.repository.WorldCupRepository()
                 val worldCupData = worldCupRepository.getTodayMatchesSummary(getApplication(), todayDateString)
 
-                _statusMessage.value = "Calling Gemini AI..."
+                _statusMessage.value = if (isEs) "Llamando a Gemini AI..." else "Calling Gemini AI..."
                 val initialBriefing = geminiAgentManager.startSession(
                     apiKey = geminiKey,
                     weatherData = weatherData,
@@ -145,7 +146,30 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun startNoSpeechTimeout() {
+        noSpeechTimeoutJob?.cancel()
+        noSpeechTimeoutJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(120_000) // 2 minutes (120,000 ms)
+            if (_uiState.value == AlarmState.LISTENING) {
+                val noSpeechMessage = if (prefs.getLanguage() == "es") {
+                    "No he escuchado nada. ¿Sigues ahí?"
+                } else {
+                    "I haven't heard anything. Are you still there?"
+                }
+                speakAgentResponse(noSpeechMessage)
+            }
+        }
+    }
+
+    private fun cancelNoSpeechTimeout() {
+        noSpeechTimeoutJob?.cancel()
+        noSpeechTimeoutJob = null
+    }
+
     private fun speakAgentResponse(text: String) {
+        cancelNoSpeechTimeout()
+        voiceManager.stopListening()
+        
         _agentSpeech.value = text
         _uiState.value = AlarmState.SPEAKING
         _userSpeech.value = ""
@@ -158,28 +182,25 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun startListeningForUser() {
+        voiceManager.stopSpeaking() // Ensure assistant is quiet when we start listening
         _uiState.value = AlarmState.LISTENING
         _micVolume.value = 0f
+        startNoSpeechTimeout()
+        
         voiceManager.startListening(
             onResult = { result ->
-                consecutiveSttErrors = 0
+                cancelNoSpeechTimeout()
                 _userSpeech.value = result
                 _micVolume.value = 0f
                 processUserSpeech(result)
             },
             onError = { error ->
                 Log.e("AlarmViewModel", "STT Error: $error")
-                consecutiveSttErrors++
                 _micVolume.value = 0f
-                if (consecutiveSttErrors >= 3) {
-                    _uiState.value = AlarmState.SPEAKING
-                    speakAgentResponse("I couldn't catch that. Please type your message using the keyboard or tap the mic button to retry.")
-                } else {
-                    _statusMessage.value = "Did not catch that: $error"
-                    _uiState.value = AlarmState.SPEAKING
-                    // Wait 2 seconds and try listening again
-                    viewModelScope.launch {
-                        kotlinx.coroutines.delay(2000)
+                // Continuous listening: silently restart listening after a short delay
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(500)
+                    if (_uiState.value == AlarmState.LISTENING) {
                         startListeningForUser()
                     }
                 }
@@ -191,7 +212,6 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startListeningManual() {
-        consecutiveSttErrors = 0
         voiceManager.stopSpeaking()
         voiceManager.stopListening()
         _micVolume.value = 0f
@@ -199,17 +219,23 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun processUserSpeech(text: String) {
+        cancelNoSpeechTimeout()
         voiceManager.stopListening()
         voiceManager.stopSpeaking()
         _micVolume.value = 0f
 
         // If the user says goodbye or close, finish the session
-        val goodbyeKeywords = listOf("goodbye", "exit", "stop", "close", "bye", "adios")
+        val goodbyeKeywords = if (prefs.getLanguage() == "es") {
+            listOf("adios", "adiós", "salir", "terminar", "chau", "chao", "cerrar", "bye", "goodbye")
+        } else {
+            listOf("goodbye", "exit", "stop", "close", "bye", "adios")
+        }
         if (goodbyeKeywords.any { text.contains(it, ignoreCase = true) }) {
             viewModelScope.launch {
-                _agentSpeech.value = "Have a great day ahead! Goodbye."
+                val goodbyeMsg = if (prefs.getLanguage() == "es") "¡Que tengas un excelente día! Adiós." else "Have a great day ahead! Goodbye."
+                _agentSpeech.value = goodbyeMsg
                 _uiState.value = AlarmState.SPEAKING
-                voiceManager.speak("Have a great day ahead! Goodbye.") {
+                voiceManager.speak(goodbyeMsg) {
                     _uiState.value = AlarmState.FINISHED
                 }
             }
@@ -224,6 +250,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun forceClose() {
+        cancelNoSpeechTimeout()
         // Stop any current speaking or listening
         voiceManager.stopListening()
         _micVolume.value = 0f
@@ -233,6 +260,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
+        cancelNoSpeechTimeout()
         voiceManager.shutdown()
         geminiAgentManager.clearSession()
     }
