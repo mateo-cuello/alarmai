@@ -11,6 +11,7 @@ import com.google.ai.client.generativeai.type.Tool
 import com.google.ai.client.generativeai.type.FunctionResponsePart
 import com.google.ai.client.generativeai.type.FunctionCallPart
 import com.google.ai.client.generativeai.type.defineFunction
+import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.mateocuello.alarmai.data.local.PreferencesManager
 import android.content.Context
 import java.io.BufferedReader
@@ -164,7 +165,8 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
             }
 
             val response = session.sendMessage(initialPrompt)
-            response.text ?: (if (language == "es") "¡Buenos días! Tuve problemas para generar tu resumen. ¿Qué puedo hacer por ti hoy?" else "Good morning! I had trouble generating your briefing. What can I do for you today?")
+            val finalResponse = handleFunctionCalls(session, response)
+            finalResponse.text ?: (if (language == "es") "¡Buenos días! Tuve problemas para generar tu resumen. ¿Qué puedo hacer por ti hoy?" else "Good morning! I had trouble generating your briefing. What can I do for you today?")
         } catch (e: Exception) {
             val language = prefs.getLanguage()
             if (language == "es") {
@@ -257,56 +259,62 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
         }
 
         try {
-            var response = session.sendMessage(userInput)
-            var functionCall = response.candidates.firstOrNull()?.content?.parts
-                ?.filterIsInstance<FunctionCallPart>()
-                ?.firstOrNull()
-
-            while (functionCall != null) {
-                if (functionCall.name == "updateTonePreference") {
-                    val newPreference = functionCall.args["newPreference"] ?: ""
-                    prefs.saveTonePreference(newPreference)
-
-                    val responsePart = FunctionResponsePart(
-                        "updateTonePreference",
-                        JSONObject().apply {
-                            put("success", true)
-                        }
-                    )
-
-                    response = session.sendMessage(content {
-                        part(responsePart)
-                    })
-                    functionCall = response.candidates.firstOrNull()?.content?.parts
-                        ?.filterIsInstance<FunctionCallPart>()
-                        ?.firstOrNull()
-                } else if (functionCall.name == "getWorldCupMatchesForDate") {
-                    val dateString = functionCall.args["dateString"] ?: ""
-                    val repo = WorldCupRepository()
-                    val summary = repo.getTodayMatchesSummary(context, dateString)
-
-                    val responsePart = FunctionResponsePart(
-                        "getWorldCupMatchesForDate",
-                        JSONObject().apply {
-                            put("summary", summary)
-                        }
-                    )
-
-                    response = session.sendMessage(content {
-                        part(responsePart)
-                    })
-                    functionCall = response.candidates.firstOrNull()?.content?.parts
-                        ?.filterIsInstance<FunctionCallPart>()
-                        ?.firstOrNull()
-                } else {
-                    break
-                }
-            }
-
-            response.text ?: "I heard you, but I couldn't generate a reply. Can you repeat that?"
+            val response = session.sendMessage(userInput)
+            val finalResponse = handleFunctionCalls(session, response)
+            finalResponse.text ?: "I heard you, but I couldn't generate a reply. Can you repeat that?"
         } catch (e: Exception) {
             "Sorry, I had trouble contacting the AI. Error: ${e.localizedMessage}"
         }
+    }
+
+    private suspend fun handleFunctionCalls(session: Chat, initialResponse: GenerateContentResponse): GenerateContentResponse {
+        var response = initialResponse
+        var functionCall = response.candidates.firstOrNull()?.content?.parts
+            ?.filterIsInstance<FunctionCallPart>()
+            ?.firstOrNull()
+
+        while (functionCall != null) {
+            val name = functionCall.name
+            if (name.endsWith("updateTonePreference")) {
+                val newPreference = functionCall.args["newPreference"] ?: ""
+                prefs.saveTonePreference(newPreference)
+
+                val responsePart = FunctionResponsePart(
+                    name,
+                    JSONObject().apply {
+                        put("success", true)
+                    }
+                )
+
+                response = session.sendMessage(content {
+                    part(responsePart)
+                })
+                functionCall = response.candidates.firstOrNull()?.content?.parts
+                    ?.filterIsInstance<FunctionCallPart>()
+                    ?.firstOrNull()
+            } else if (name.endsWith("getWorldCupMatchesForDate")) {
+                val dateString = functionCall.args["dateString"] ?: ""
+                val repo = WorldCupRepository()
+                val summary = repo.getTodayMatchesSummary(context, dateString)
+
+                val responsePart = FunctionResponsePart(
+                    name,
+                    JSONObject().apply {
+                        put("summary", summary)
+                    }
+                )
+
+                response = session.sendMessage(content {
+                    part(responsePart)
+                })
+                functionCall = response.candidates.firstOrNull()?.content?.parts
+                    ?.filterIsInstance<FunctionCallPart>()
+                    ?.firstOrNull()
+            } else {
+                break
+            }
+        }
+        return response
     }
 
     fun clearSession() {

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-06-12T14:07:22.863Z" hostname="INSPRION16" time="0.131">
+<testsuite name="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-06-12T14:31:24.780Z" hostname="INSPRION16" time="0.157">
   <properties/>
-  <testcase name="testStartSessionDemoMode_Spanish" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.118"/>
-  <testcase name="testSendMessageDemoMode_Spanish" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.007"/>
-  <testcase name="testStartSessionDemoMode_English" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.003"/>
+  <testcase name="testStartSessionDemoMode_Spanish" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.143"/>
+  <testcase name="testSendMessageDemoMode_Spanish" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.006"/>
+  <testcase name="testStartSessionDemoMode_English" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.004"/>
   <testcase name="testSendMessageDemoMode_English" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.003"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
