@@ -158,8 +158,9 @@ fun MainScreen(viewModel: MainViewModel) {
 
     val gradient = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFF0F172A),
-            Color(0xFF0F172A)
+            Color(0xFF0B0F19), // Deep cosmic black-blue
+            Color(0xFF1E1B4B), // Deep indigo
+            Color(0xFF0F172A)  // Slate 900
         )
     )
 
@@ -194,9 +195,10 @@ fun MainScreen(viewModel: MainViewModel) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 20.dp),
+                .padding(bottom = 20.dp)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(
@@ -244,7 +246,8 @@ fun MainScreen(viewModel: MainViewModel) {
                                     true
                                 ).show()
                             }
-                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     )
 
@@ -321,9 +324,10 @@ fun MainScreen(viewModel: MainViewModel) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 20.dp),
+                .padding(bottom = 20.dp)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(
@@ -405,9 +409,10 @@ fun MainScreen(viewModel: MainViewModel) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 20.dp),
+                .padding(bottom = 20.dp)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(
@@ -449,12 +454,14 @@ fun MainScreen(viewModel: MainViewModel) {
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SecondaryPink,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        focusedBorderColor = SecondaryPink.copy(alpha = 0.8f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                         focusedLabelColor = SecondaryPink,
                         unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
                         focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        unfocusedTextColor = Color.White,
+                        focusedContainerColor = Color.White.copy(alpha = 0.04f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.02f)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -526,12 +533,14 @@ fun MainScreen(viewModel: MainViewModel) {
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SecondaryPink,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        focusedBorderColor = SecondaryPink.copy(alpha = 0.8f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                         focusedLabelColor = SecondaryPink,
                         unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
                         focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        unfocusedTextColor = Color.White,
+                        focusedContainerColor = Color.White.copy(alpha = 0.04f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.02f)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -546,12 +555,14 @@ fun MainScreen(viewModel: MainViewModel) {
                     placeholder = { Text("technology, science, world") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SecondaryPink,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        focusedBorderColor = SecondaryPink.copy(alpha = 0.8f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                         focusedLabelColor = SecondaryPink,
                         unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
                         focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        unfocusedTextColor = Color.White,
+                        focusedContainerColor = Color.White.copy(alpha = 0.04f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.02f)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -562,9 +573,10 @@ fun MainScreen(viewModel: MainViewModel) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp),
+                .padding(bottom = 32.dp)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(

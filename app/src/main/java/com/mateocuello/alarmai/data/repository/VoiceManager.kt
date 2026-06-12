@@ -2,6 +2,9 @@ package com.mateocuello.alarmai.data.repository
 
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -16,6 +19,73 @@ class VoiceManager(private val context: Context) {
     private var speechRecognizer: SpeechRecognizer? = null
     private var isTtsInitialized = false
     private var ttsCompleteCallback: (() -> Unit)? = null
+
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private var isTtsActive = false
+    private var isListeningActive = false
+
+    private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                Log.d("VoiceManager", "Audio focus lost permanently")
+                stopSpeaking()
+                stopListening()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                Log.d("VoiceManager", "Audio focus lost transiently")
+                stopSpeaking()
+                stopListening()
+            }
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                Log.d("VoiceManager", "Audio focus gained")
+            }
+        }
+    }
+
+    private val focusRequest: AudioFocusRequest by lazy {
+        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ASSISTANT)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build()
+            )
+            .setOnAudioFocusChangeListener(focusChangeListener)
+            .build()
+    }
+
+    private fun requestAudioFocus() {
+        try {
+            val result = audioManager.requestAudioFocus(focusRequest)
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                Log.d("VoiceManager", "Audio focus request GRANTED")
+            } else {
+                Log.w("VoiceManager", "Audio focus request FAILED")
+            }
+        } catch (e: Exception) {
+            Log.e("VoiceManager", "Error requesting audio focus: ${e.localizedMessage}")
+        }
+    }
+
+    private fun abandonAudioFocus() {
+        try {
+            val result = audioManager.abandonAudioFocusRequest(focusRequest)
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                Log.d("VoiceManager", "Audio focus abandoned successfully")
+            } else {
+                Log.w("VoiceManager", "Failed to abandon audio focus")
+            }
+        } catch (e: Exception) {
+            Log.e("VoiceManager", "Error abandoning audio focus: ${e.localizedMessage}")
+        }
+    }
+
+    private fun checkAndAbandonFocus() {
+        if (!isTtsActive && !isListeningActive) {
+            abandonAudioFocus()
+        }
+    }
 
     init {
         initTts()
@@ -51,10 +121,12 @@ class VoiceManager(private val context: Context) {
             @Deprecated("Deprecated in Java")
             override fun onError(utteranceId: String?) {
                 Log.e("VoiceManager", "TTS Error")
+                ttsCompleteCallback?.invoke()
             }
 
             override fun onError(utteranceId: String?, errorCode: Int) {
                 Log.e("VoiceManager", "TTS Error: $errorCode")
+                ttsCompleteCallback?.invoke()
             }
         })
     }
@@ -65,14 +137,24 @@ class VoiceManager(private val context: Context) {
             onComplete()
             return
         }
-        ttsCompleteCallback = onComplete
+        requestAudioFocus()
+        isTtsActive = true
+        ttsCompleteCallback = {
+            isTtsActive = false
+            checkAndAbandonFocus()
+            onComplete()
+        }
         val params = Bundle().apply {
             putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "alarm_briefing")
         }
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "alarm_briefing")
     }
 
-    fun startListening(onResult: (String) -> Unit, onError: (String) -> Unit) {
+    fun startListening(
+        onResult: (String) -> Unit,
+        onError: (String) -> Unit,
+        onRmsChanged: (Float) -> Unit
+    ) {
         // Run on Main UI Thread because SpeechRecognizer must be created/called on the main thread
         val mainHandler = android.os.Handler(context.mainLooper)
         mainHandler.post {
@@ -80,6 +162,9 @@ class VoiceManager(private val context: Context) {
                 if (speechRecognizer != null) {
                     speechRecognizer?.destroy()
                 }
+                requestAudioFocus()
+                isListeningActive = true
+
                 speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
 
                 val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -91,11 +176,15 @@ class VoiceManager(private val context: Context) {
                 speechRecognizer?.setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {}
                     override fun onBeginningOfSpeech() {}
-                    override fun onRmsChanged(rmsdB: Float) {}
+                    override fun onRmsChanged(rmsdB: Float) {
+                        onRmsChanged(rmsdB)
+                    }
                     override fun onBufferReceived(buffer: ByteArray?) {}
                     override fun onEndOfSpeech() {}
 
                     override fun onError(error: Int) {
+                        isListeningActive = false
+                        checkAndAbandonFocus()
                         val errorMessage = when (error) {
                             SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
                             SpeechRecognizer.ERROR_CLIENT -> "Client-side error"
@@ -113,6 +202,8 @@ class VoiceManager(private val context: Context) {
                     }
 
                     override fun onResults(results: Bundle?) {
+                        isListeningActive = false
+                        checkAndAbandonFocus()
                         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                         val text = matches?.firstOrNull()
                         if (!text.isNullOrBlank()) {
@@ -128,6 +219,8 @@ class VoiceManager(private val context: Context) {
 
                 speechRecognizer?.startListening(intent)
             } catch (e: Exception) {
+                isListeningActive = false
+                checkAndAbandonFocus()
                 Log.e("VoiceManager", "Failed to start listening: ${e.localizedMessage}")
                 onError("Failed to start listening: ${e.localizedMessage}")
             }
@@ -137,12 +230,16 @@ class VoiceManager(private val context: Context) {
     fun stopSpeaking() {
         ttsCompleteCallback = null
         tts?.stop()
+        isTtsActive = false
+        checkAndAbandonFocus()
     }
 
     fun stopListening() {
         val mainHandler = android.os.Handler(context.mainLooper)
         mainHandler.post {
             speechRecognizer?.stopListening()
+            isListeningActive = false
+            checkAndAbandonFocus()
         }
     }
 
@@ -150,5 +247,9 @@ class VoiceManager(private val context: Context) {
         tts?.stop()
         tts?.shutdown()
         speechRecognizer?.destroy()
+        isTtsActive = false
+        isListeningActive = false
+        abandonAudioFocus()
     }
 }
+

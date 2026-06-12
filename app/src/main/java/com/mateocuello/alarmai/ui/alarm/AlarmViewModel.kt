@@ -75,6 +75,9 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val _statusMessage = MutableStateFlow("")
     val statusMessage: StateFlow<String> = _statusMessage
 
+    private val _micVolume = MutableStateFlow(0f)
+    val micVolume: StateFlow<Float> = _micVolume
+
     fun dismissAndTalk() {
         viewModelScope.launch {
             // 1. Stop the alarm service ringtone
@@ -118,6 +121,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         _agentSpeech.value = text
         _uiState.value = AlarmState.SPEAKING
         _userSpeech.value = ""
+        _micVolume.value = 0f
         
         voiceManager.speak(text) {
             // Callback when agent finishes speaking: start listening automatically!
@@ -127,15 +131,18 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun startListeningForUser() {
         _uiState.value = AlarmState.LISTENING
+        _micVolume.value = 0f
         voiceManager.startListening(
             onResult = { result ->
                 consecutiveSttErrors = 0
                 _userSpeech.value = result
+                _micVolume.value = 0f
                 processUserSpeech(result)
             },
             onError = { error ->
                 Log.e("AlarmViewModel", "STT Error: $error")
                 consecutiveSttErrors++
+                _micVolume.value = 0f
                 if (consecutiveSttErrors >= 3) {
                     _uiState.value = AlarmState.SPEAKING
                     speakAgentResponse("I couldn't catch that. Please type your message using the keyboard or tap the mic button to retry.")
@@ -148,6 +155,9 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
                         startListeningForUser()
                     }
                 }
+            },
+            onRmsChanged = { rmsdB ->
+                _micVolume.value = rmsdB
             }
         )
     }
@@ -156,12 +166,14 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         consecutiveSttErrors = 0
         voiceManager.stopSpeaking()
         voiceManager.stopListening()
+        _micVolume.value = 0f
         startListeningForUser()
     }
 
     fun processUserSpeech(text: String) {
         voiceManager.stopListening()
         voiceManager.stopSpeaking()
+        _micVolume.value = 0f
 
         // If the user says goodbye or close, finish the session
         val goodbyeKeywords = listOf("goodbye", "exit", "stop", "close", "bye", "adios")
@@ -186,6 +198,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     fun forceClose() {
         // Stop any current speaking or listening
         voiceManager.stopListening()
+        _micVolume.value = 0f
         getApplication<Application>().stopService(Intent(getApplication(), AlarmService::class.java))
         _uiState.value = AlarmState.FINISHED
     }

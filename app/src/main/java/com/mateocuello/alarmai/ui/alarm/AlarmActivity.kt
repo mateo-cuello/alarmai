@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -61,6 +62,7 @@ class AlarmActivity : ComponentActivity() {
                 val userSpeech by viewModel.userSpeech.collectAsState()
                 val statusMessage by viewModel.statusMessage.collectAsState()
                 val geminiModelName by viewModel.geminiModelName.collectAsState()
+                val micVolume by viewModel.micVolume.collectAsState()
 
                 // If finished, close the activity
                 LaunchedEffect(state) {
@@ -79,6 +81,7 @@ class AlarmActivity : ComponentActivity() {
                         userSpeech = userSpeech,
                         statusMessage = statusMessage,
                         geminiModelName = geminiModelName,
+                        micVolume = micVolume,
                         onDismiss = { viewModel.dismissAndTalk() },
                         onClose = { viewModel.forceClose() },
                         onSendText = { text -> viewModel.processUserSpeech(text) },
@@ -114,6 +117,7 @@ fun AlarmScreenContent(
     userSpeech: String,
     statusMessage: String,
     geminiModelName: String,
+    micVolume: Float,
     onDismiss: () -> Unit,
     onClose: () -> Unit,
     onSendText: (String) -> Unit,
@@ -121,8 +125,9 @@ fun AlarmScreenContent(
 ) {
     val gradient = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFF0F172A),
-            Color(0xFF1E1E38)
+            Color(0xFF0B0F19), // Deep cosmic black-blue
+            Color(0xFF1E1B4B), // Deep indigo
+            Color(0xFF0F172A)  // Slate 900
         )
     )
 
@@ -177,7 +182,7 @@ fun AlarmScreenContent(
                     AlarmState.RINGING -> RingingLayout(onDismiss)
                     AlarmState.FETCHING_DATA -> LoadingLayout(statusMessage)
                     AlarmState.SPEAKING -> SpeakingLayout(agentSpeech, onSendText, onMicClick)
-                    AlarmState.LISTENING -> ListeningLayout(userSpeech, onSendText, onMicClick)
+                    AlarmState.LISTENING -> ListeningLayout(userSpeech, micVolume, onSendText, onMicClick)
                     AlarmState.THINKING -> ThinkingLayout()
                     else -> {}
                 }
@@ -350,9 +355,10 @@ fun SpeakingLayout(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
             ) {
                 Text(
                     text = speech,
@@ -423,7 +429,7 @@ fun SpeakingLayout(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
                         focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                         focusedContainerColor = Color.White.copy(alpha = 0.05f),
                         unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
                     ),
@@ -451,18 +457,29 @@ fun SpeakingLayout(
 @Composable
 fun ListeningLayout(
     userSpeech: String,
+    micVolume: Float,
     onSendText: (String) -> Unit,
     onMicClick: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse_mic")
-    val borderAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 1.0f,
+    
+    // Smooth the volume changes to avoid jittery movements
+    // RmsdB is typically -2f to 10f. Let's normalize it to 0f to 1f.
+    val normalizedVolume = ((micVolume + 2f) / 12f).coerceIn(0f, 1f)
+    val animatedVolume by animateFloatAsState(
+        targetValue = normalizedVolume,
+        animationSpec = tween(150, easing = FastOutSlowInEasing),
+        label = "animated_volume"
+    )
+
+    val wavePhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = EaseInOutCubic),
-            repeatMode = RepeatMode.Reverse
+            animation = tween(2200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
         ),
-        label = "mic_border"
+        label = "wave_phase"
     )
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -480,22 +497,61 @@ fun ListeningLayout(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(24.dp))
+            
+            // Concentrate glowing canvas waves around the mic icon
             Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(Color.White.copy(alpha = 0.05f), shape = CircleShape)
-                    .border(2.dp, Color(0xFF06B6D4).copy(alpha = borderAlpha), CircleShape),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(240.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Mic,
-                    contentDescription = "Listening",
-                    tint = Color(0xFF06B6D4),
-                    modifier = Modifier.size(48.dp)
-                )
+                // Wave Canvas in the background
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val center = this.center
+                    val baseRadius = 52.dp.toPx()
+                    val maxRadius = 110.dp.toPx()
+                    
+                    // We draw 3 concentric glowing waves
+                    for (i in 0..2) {
+                        val waveProgress = (wavePhase + i / 3f) % 1f
+                        val volumeMultiplier = 0.3f + 0.7f * animatedVolume
+                        val currentRadius = baseRadius + waveProgress * (maxRadius - baseRadius) * volumeMultiplier
+                        
+                        // Alpha fades out as it expands
+                        val alpha = (1f - waveProgress) * 0.4f * volumeMultiplier
+                        
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0xFF06B6D4).copy(alpha = alpha),
+                                    Color(0xFF06B6D4).copy(alpha = alpha * 0.5f),
+                                    Color(0xFF06B6D4).copy(alpha = 0f)
+                                ),
+                                center = center,
+                                radius = currentRadius.coerceAtLeast(1f)
+                            ),
+                            radius = currentRadius,
+                            center = center
+                        )
+                    }
+                }
+
+                // Central Mic Circle
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(Color.White.copy(alpha = 0.08f), shape = CircleShape)
+                        .border(1.5.dp, Color(0xFF06B6D4).copy(alpha = 0.8f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Listening",
+                        tint = Color(0xFF06B6D4),
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Listening...",
@@ -510,9 +566,10 @@ fun ListeningLayout(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp)),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
                 ) {
                     Text(
                         text = "\"$userSpeech\"",
@@ -592,7 +649,7 @@ fun ListeningLayout(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
                         focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                         focusedContainerColor = Color.White.copy(alpha = 0.05f),
                         unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
                     ),
