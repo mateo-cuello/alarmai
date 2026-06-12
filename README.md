@@ -2,7 +2,7 @@
 
 **AlarmAI** is a premium, voice-powered morning assistant alarm application for Android. Built natively using **Kotlin** and **Jetpack Compose**, it turns standard waking alarms into interactive conversational sessions. 
 
-When the alarm fires, it launches a full-screen wake-up window. Once dismissed, the app retrieves real-time **weather coordinates**, scrapes **curated news headlines** according to your interests, reads **today's system calendar events**, and streams a unified morning briefing through the **Gemini 1.5 Flash** model. It speaks the briefing using Android's native Text-to-Speech (TTS) engine and listens to your spoken responses using Android's native SpeechRecognizer (STT) for a complete back-and-forth hands-free voice dialogue.
+When the alarm fires, it launches a full-screen wake-up window. Once dismissed, the app retrieves real-time **weather coordinates**, scrapes **curated news headlines** according to your interests, reads **today's system calendar events**, and streams a unified morning briefing through the **Gemini 3.1 Flash** model. It speaks the briefing using Android's native Text-to-Speech (TTS) engine and listens to your spoken responses using Android's native SpeechRecognizer (STT) for a complete back-and-forth hands-free voice dialogue.
 
 ---
 
