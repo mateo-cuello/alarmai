@@ -120,11 +120,48 @@ class GeminiAgentManagerTest {
         
         val partObj = partsArray.getJSONObject(0)
         assertTrue(partObj.has("functionCall"))
-        assertEquals("test_signature_abc_123", partObj.getString("thought_signature"))
+        assertEquals("test_signature_abc_123", partObj.getString("thoughtSignature"))
     }
 
     @Test
     fun testDeserializationWithThoughtSignature() {
+        val jsonString = """
+            {
+                "candidates": [
+                    {
+                        "content": {
+                            "role": "model",
+                            "parts": [
+                                {
+                                    "functionCall": {
+                                        "name": "getWorldCupMatchesForDate",
+                                        "args": {
+                                            "dateString": "2026-06-12"
+                                        }
+                                    },
+                                    "thoughtSignature": "test_signature_abc_123"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        """.trimIndent()
+        
+        val content = geminiAgentManager.parseResponseContent(jsonString)
+        assertEquals("model", content?.role)
+        assertEquals(1, content?.parts?.size)
+        
+        val part = content?.parts?.get(0)
+        assertTrue(part is GeminiAgentManager.FunctionCallPart)
+        val fcPart = part as GeminiAgentManager.FunctionCallPart
+        assertEquals("getWorldCupMatchesForDate", fcPart.name)
+        assertEquals("2026-06-12", fcPart.args["dateString"])
+        assertEquals("test_signature_abc_123", fcPart.thoughtSignature)
+    }
+
+    @Test
+    fun testDeserializationWithThoughtSignatureSnakeCase() {
         val jsonString = """
             {
                 "candidates": [

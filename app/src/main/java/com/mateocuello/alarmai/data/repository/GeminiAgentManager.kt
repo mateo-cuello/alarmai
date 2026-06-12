@@ -15,7 +15,6 @@ import okhttp3.Request
 
 class GeminiAgentManager(private val context: Context, private val prefs: PreferencesManager) {
 
-    // Custom ChatSession data structures to replace the legacy SDK classes
     data class Content(
         val role: String,
         val parts: List<Part>
@@ -309,7 +308,7 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                     fcJson.put("args", argsJson)
                     partJson.put("functionCall", fcJson)
                     if (!part.thoughtSignature.isNullOrEmpty()) {
-                        partJson.put("thought_signature", part.thoughtSignature)
+                        partJson.put("thoughtSignature", part.thoughtSignature)
                     }
                 }
                 is FunctionResponsePart -> {
@@ -354,7 +353,13 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                         args[key] = argsJson.get(key)
                     }
                 }
-                val thoughtSignature = if (partJson.has("thought_signature")) partJson.optString("thought_signature") else null
+                val thoughtSignature = if (partJson.has("thoughtSignature")) {
+                    partJson.optString("thoughtSignature")
+                } else if (partJson.has("thought_signature")) {
+                    partJson.optString("thought_signature")
+                } else {
+                    null
+                }
                 parts.add(FunctionCallPart(name, args, thoughtSignature))
             }
         }
