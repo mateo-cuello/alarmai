@@ -542,7 +542,7 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
 
         // Tool 2: Google Search grounding (built-in Gemini capability)
         val googleSearchTool = JSONObject().apply {
-            put("google_search", JSONObject())
+            put("googleSearch", JSONObject())
         }
         toolsArray.put(googleSearchTool)
 

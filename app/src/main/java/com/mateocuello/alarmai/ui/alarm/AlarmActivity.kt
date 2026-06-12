@@ -42,6 +42,7 @@ import com.mateocuello.alarmai.ui.theme.AlarmAITheme
 import com.mateocuello.alarmai.ui.theme.DarkBg
 import com.mateocuello.alarmai.ui.theme.PrimaryPurple
 import com.mateocuello.alarmai.ui.theme.SecondaryPink
+import androidx.compose.animation.*
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.lazy.LazyColumn
@@ -181,20 +182,28 @@ fun AlarmScreenContent(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                when (state) {
-                    AlarmState.RINGING -> RingingLayout(onDismiss)
-                    AlarmState.FETCHING_DATA -> LoadingLayout(statusMessage)
-                    AlarmState.SPEAKING, AlarmState.LISTENING, AlarmState.THINKING -> {
-                        ChatLayout(
-                            chatMessages = chatMessages,
-                            state = state,
-                            userSpeech = userSpeech,
-                            micVolume = micVolume,
-                            onSendText = onSendText,
-                            onMicClick = onMicClick
-                        )
+                androidx.compose.animation.AnimatedContent(
+                    targetState = state,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(400)) togetherWith fadeOut(animationSpec = tween(400))
+                    },
+                    label = "state_transition"
+                ) { targetState ->
+                    when (targetState) {
+                        AlarmState.RINGING -> RingingLayout(onDismiss)
+                        AlarmState.FETCHING_DATA -> LoadingLayout(statusMessage)
+                        AlarmState.SPEAKING, AlarmState.LISTENING, AlarmState.THINKING -> {
+                            ChatLayout(
+                                chatMessages = chatMessages,
+                                state = targetState,
+                                userSpeech = userSpeech,
+                                micVolume = micVolume,
+                                onSendText = onSendText,
+                                onMicClick = onMicClick
+                            )
+                        }
+                        else -> {}
                     }
-                    else -> {}
                 }
             }
 
@@ -443,7 +452,7 @@ fun ChatLayout(
                     singleLine = true
                 )
 
-                val micBgColor = if (state == AlarmState.LISTENING) Color(0xFF06B6D4) else Color.White.copy(alpha = 0.15f)
+                val micBgColor = if (state == AlarmState.LISTENING) MaterialTheme.colorScheme.tertiary else Color.White.copy(alpha = 0.15f)
                 val micIconColor = if (state == AlarmState.LISTENING) Color.White else Color.White.copy(alpha = 0.7f)
                 IconButton(
                     onClick = onMicClick,
@@ -596,9 +605,9 @@ fun AgentThinkingBubble() {
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(modifier = Modifier.size(8.dp).scale(dot1Scale).background(Color(0xFF06B6D4), CircleShape))
-            Box(modifier = Modifier.size(8.dp).scale(dot2Scale).background(Color(0xFF06B6D4), CircleShape))
-            Box(modifier = Modifier.size(8.dp).scale(dot3Scale).background(Color(0xFF06B6D4), CircleShape))
+            Box(modifier = Modifier.size(8.dp).scale(dot1Scale).background(MaterialTheme.colorScheme.tertiary, CircleShape))
+            Box(modifier = Modifier.size(8.dp).scale(dot2Scale).background(MaterialTheme.colorScheme.tertiary, CircleShape))
+            Box(modifier = Modifier.size(8.dp).scale(dot3Scale).background(MaterialTheme.colorScheme.tertiary, CircleShape))
         }
     }
 }
@@ -623,6 +632,8 @@ fun VoiceInputVisualizer(micVolume: Float) {
         ),
         label = "wave_phase"
     )
+
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
 
     Row(
         modifier = Modifier
@@ -652,7 +663,7 @@ fun VoiceInputVisualizer(micVolume: Float) {
                 val y = centerY - barHeight / 2
                 
                 drawRoundRect(
-                    color = Color(0xFF06B6D4).copy(alpha = 0.8f - 0.4f * distanceFromCenter),
+                    color = tertiaryColor.copy(alpha = 0.8f - 0.4f * distanceFromCenter),
                     size = androidx.compose.ui.geometry.Size(barWidth, barHeight),
                     topLeft = androidx.compose.ui.geometry.Offset(x, y),
                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(barWidth / 2)
@@ -706,6 +717,7 @@ fun QuickReplyChip(
 ) {
     Box(
         modifier = Modifier
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(Color.White.copy(alpha = 0.08f))
             .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))

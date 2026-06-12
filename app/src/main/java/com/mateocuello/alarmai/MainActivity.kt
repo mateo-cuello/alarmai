@@ -54,6 +54,7 @@ import com.mateocuello.alarmai.ui.theme.AlarmAITheme
 import com.mateocuello.alarmai.ui.theme.DarkBg
 import com.mateocuello.alarmai.ui.theme.PrimaryPurple
 import com.mateocuello.alarmai.ui.theme.SecondaryPink
+import com.mateocuello.alarmai.ui.theme.glassmorphicCard
 
 class MainActivity : ComponentActivity() {
 
@@ -204,7 +205,8 @@ fun MainScreen(viewModel: MainViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+                .glassmorphicCard(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
@@ -293,7 +295,7 @@ fun MainScreen(viewModel: MainViewModel) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(48.dp)
                                 .background(
                                     color = if (isSelected) PrimaryPurple else Color.White.copy(alpha = 0.05f),
                                     shape = RoundedCornerShape(20.dp)
@@ -323,7 +325,7 @@ fun MainScreen(viewModel: MainViewModel) {
 
                 Text(
                     text = if (alarm.isActive) "Alarm is scheduled" else "Alarm is disabled",
-                    color = if (alarm.isActive) SecondaryPink else Color.White.copy(alpha = 0.4f),
+                    color = if (alarm.isActive) SecondaryPink else Color.White.copy(alpha = 0.7f),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -335,7 +337,8 @@ fun MainScreen(viewModel: MainViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+                .glassmorphicCard(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
@@ -420,7 +423,8 @@ fun MainScreen(viewModel: MainViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+                .glassmorphicCard(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
@@ -569,7 +573,7 @@ fun MainScreen(viewModel: MainViewModel) {
                         focusedContainerColor = Color.White.copy(alpha = 0.05f),
                         unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
                         focusedLabelColor = PrimaryPurple,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.4f)
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.7f)
                     ),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth(),
@@ -579,7 +583,7 @@ fun MainScreen(viewModel: MainViewModel) {
                 Text(
                     text = "Note: The AI agent can modify this text box dynamically if you request a tone change during the chat.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.4f)
+                    color = Color.White.copy(alpha = 0.7f)
                 )
             }
         }
@@ -589,7 +593,8 @@ fun MainScreen(viewModel: MainViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 20.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+                .glassmorphicCard(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
@@ -636,7 +641,7 @@ fun MainScreen(viewModel: MainViewModel) {
                         focusedBorderColor = SecondaryPink.copy(alpha = 0.8f),
                         unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                         focusedLabelColor = SecondaryPink,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
                         focusedContainerColor = Color.White.copy(alpha = 0.04f),
@@ -701,7 +706,7 @@ fun MainScreen(viewModel: MainViewModel) {
                 Text(
                     text = "Headlines from Google News (no API key needed)",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.4f),
+                    color = Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
                 )
                 OutlinedTextField(
@@ -714,7 +719,7 @@ fun MainScreen(viewModel: MainViewModel) {
                         focusedBorderColor = SecondaryPink.copy(alpha = 0.8f),
                         unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
                         focusedLabelColor = SecondaryPink,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.4f),
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
                         focusedContainerColor = Color.White.copy(alpha = 0.04f),
@@ -730,7 +735,8 @@ fun MainScreen(viewModel: MainViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp)),
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
+                .glassmorphicCard(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
         ) {
@@ -742,7 +748,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = "Test Tools",
-                        tint = Color(0xFF06B6D4),
+                        tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -758,7 +764,7 @@ fun MainScreen(viewModel: MainViewModel) {
 
                 Button(
                     onClick = { triggerTestAlarm(context) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF06B6D4)),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
