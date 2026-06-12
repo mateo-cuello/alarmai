@@ -20,6 +20,9 @@ class PreferencesManager(context: Context) {
         private const val KEY_ALARM_VOLUME = "alarm_volume"
         private const val KEY_ALARM_RINGTONE_URI = "alarm_ringtone_uri"
         private const val KEY_GEMINI_MODEL = "gemini_model"
+        private const val KEY_PREFETCHED_BRIEFING = "prefetched_briefing"
+        private const val KEY_PREFETCHED_PROMPT = "prefetched_prompt"
+        private const val KEY_PREFETCHED_TIMESTAMP = "prefetched_timestamp"
     }
 
     fun saveAlarm(alarm: Alarm) {
@@ -109,5 +112,28 @@ class PreferencesManager(context: Context) {
 
     fun getAlarmRingtoneUri(): String {
         return prefs.getString(KEY_ALARM_RINGTONE_URI, "") ?: ""
+    }
+
+    fun savePrefetchedBriefing(briefing: String, prompt: String, timestamp: Long) {
+        prefs.edit()
+            .putString(KEY_PREFETCHED_BRIEFING, briefing)
+            .putString(KEY_PREFETCHED_PROMPT, prompt)
+            .putLong(KEY_PREFETCHED_TIMESTAMP, timestamp)
+            .apply()
+    }
+
+    fun getPrefetchedBriefing(): Triple<String, String, Long> {
+        val briefing = prefs.getString(KEY_PREFETCHED_BRIEFING, "") ?: ""
+        val prompt = prefs.getString(KEY_PREFETCHED_PROMPT, "") ?: ""
+        val timestamp = prefs.getLong(KEY_PREFETCHED_TIMESTAMP, 0L)
+        return Triple(briefing, prompt, timestamp)
+    }
+
+    fun clearPrefetchedBriefing() {
+        prefs.edit()
+            .remove(KEY_PREFETCHED_BRIEFING)
+            .remove(KEY_PREFETCHED_PROMPT)
+            .remove(KEY_PREFETCHED_TIMESTAMP)
+            .apply()
     }
 }

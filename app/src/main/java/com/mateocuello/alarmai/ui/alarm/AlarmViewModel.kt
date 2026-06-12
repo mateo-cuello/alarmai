@@ -83,37 +83,65 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
             // 1. Stop the alarm service ringtone
             getApplication<Application>().stopService(Intent(getApplication(), AlarmService::class.java))
             
-            // 2. Fetch data & start AI agent
-            _uiState.value = AlarmState.FETCHING_DATA
-            _statusMessage.value = "Detecting location..."
-            
-            // Get location coordinates (either pre-fetched or fetch on demand)
-            val (lat, lon) = prefetchedLocation
-                ?: locationProvider.getCurrentLocation()?.also { prefs.saveLocation(it.first, it.second) }
-                ?: prefs.getLocation()
-            
-            _statusMessage.value = "Fetching weather & news..."
-            val weatherData = weatherRepository.getWeather(lat, lon)
-            
-            val newsKey = prefs.getNewsKey()
-            val newsTopics = prefs.getNewsTopics()
-            val newsData = newsRepository.getNews(newsKey, newsTopics)
-            
-            _statusMessage.value = "Reading today's schedule..."
-            val calendarData = calendarRepository.getTodayEvents()
-            
-            _statusMessage.value = "Calling Gemini AI..."
             val geminiKey = prefs.getGeminiKey()
             val modelName = prefs.getGeminiModel()
-            val initialBriefing = geminiAgentManager.startSession(
-                apiKey = geminiKey,
-                weatherData = weatherData,
-                newsData = newsData,
-                calendarData = calendarData,
-                modelName = modelName
-            )
             
-            speakAgentResponse(initialBriefing)
+            // Check for valid cached pre-fetch briefing (less than 5 minutes old = 300,000 ms)
+            val (cachedBriefing, cachedPrompt, cachedTime) = prefs.getPrefetchedBriefing()
+            val isCacheValid = cachedBriefing.isNotEmpty() && (System.currentTimeMillis() - cachedTime < 300_000)
+            
+            if (isCacheValid) {
+                Log.d("AlarmViewModel", "Using valid prefetched briefing!")
+                // Reconstruct the Gemini session with the prompt and briefing history
+                geminiAgentManager.reconstructSession(
+                    apiKey = geminiKey,
+                    modelName = modelName,
+                    prompt = cachedPrompt,
+                    response = cachedBriefing
+                )
+                // Clear the cache so it's not reused next time
+                prefs.clearPrefetchedBriefing()
+                // Speak immediately!
+                speakAgentResponse(cachedBriefing)
+            } else {
+                Log.d("AlarmViewModel", "No valid prefetched briefing. Loading on demand.")
+                // 2. Fetch data & start AI agent
+                _uiState.value = AlarmState.FETCHING_DATA
+                _statusMessage.value = "Detecting location..."
+                
+                // Get location coordinates (either pre-fetched or fetch on demand)
+                val (lat, lon) = prefetchedLocation
+                    ?: locationProvider.getCurrentLocation()?.also { prefs.saveLocation(it.first, it.second) }
+                    ?: prefs.getLocation()
+                
+                _statusMessage.value = "Fetching weather & news..."
+                val weatherData = weatherRepository.getWeather(lat, lon)
+                
+                val newsKey = prefs.getNewsKey()
+                val newsTopics = prefs.getNewsTopics()
+                val newsData = newsRepository.getNews(newsKey, newsTopics)
+                
+                _statusMessage.value = "Reading today's schedule..."
+                val calendarData = calendarRepository.getTodayEvents()
+                
+                _statusMessage.value = "Checking World Cup matches..."
+                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                val todayDateString = sdf.format(java.util.Date())
+                val worldCupRepository = com.mateocuello.alarmai.data.repository.WorldCupRepository()
+                val worldCupData = worldCupRepository.getTodayMatchesSummary(getApplication(), todayDateString)
+
+                _statusMessage.value = "Calling Gemini AI..."
+                val initialBriefing = geminiAgentManager.startSession(
+                    apiKey = geminiKey,
+                    weatherData = weatherData,
+                    newsData = newsData,
+                    calendarData = calendarData,
+                    worldCupData = worldCupData,
+                    modelName = modelName
+                )
+                
+                speakAgentResponse(initialBriefing)
+            }
         }
     }
 

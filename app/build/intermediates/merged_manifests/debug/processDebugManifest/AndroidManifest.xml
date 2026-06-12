@@ -72,6 +72,12 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Broadcast Receiver for Pre-Alarm Prefetching -->
+        <receiver
+            android:name="com.mateocuello.alarmai.receiver.PreAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <!-- Broadcast Receiver for Boot Recovery -->
         <receiver
             android:name="com.mateocuello.alarmai.receiver.BootReceiver"

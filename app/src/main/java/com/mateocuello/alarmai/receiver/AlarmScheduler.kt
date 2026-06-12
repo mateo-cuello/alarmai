@@ -31,6 +31,7 @@ class AlarmScheduler(private val context: Context) {
             timeInMillis = nextTime
         }
 
+        // Schedule Main Alarm
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
@@ -58,6 +59,49 @@ class AlarmScheduler(private val context: Context) {
         } catch (e: Exception) {
             Log.e("AlarmScheduler", "Failed to schedule alarm: ${e.localizedMessage}")
         }
+
+        // Schedule Pre-Alarm
+        val now = System.currentTimeMillis()
+        val preAlarmTime = nextTime - 120_000 // 2 minutes before
+        val preAlarmIntent = Intent(context, PreAlarmReceiver::class.java)
+        val preAlarmPendingIntent = PendingIntent.getBroadcast(
+            context,
+            1002,
+            preAlarmIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        if (preAlarmTime > now) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (alarmManager.canScheduleExactAlarms()) {
+                        alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            preAlarmTime,
+                            preAlarmPendingIntent
+                        )
+                    } else {
+                        alarmManager.setAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            preAlarmTime,
+                            preAlarmPendingIntent
+                        )
+                    }
+                } else {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        preAlarmTime,
+                        preAlarmPendingIntent
+                    )
+                }
+                Log.d("AlarmScheduler", "Pre-alarm scheduled for ${java.util.Date(preAlarmTime)}")
+            } catch (e: Exception) {
+                Log.e("AlarmScheduler", "Failed to schedule pre-alarm: ${e.localizedMessage}")
+            }
+        } else {
+            // Alarm is scheduled for less than 2 minutes from now. Trigger pre-fetch immediately.
+            PreAlarmReceiver.startPrefetch(context)
+        }
     }
 
     fun cancel() {
@@ -71,7 +115,19 @@ class AlarmScheduler(private val context: Context) {
         if (pendingIntent != null) {
             alarmManager.cancel(pendingIntent)
             pendingIntent.cancel()
-            Log.d("AlarmScheduler", "Alarm cancelled")
         }
+
+        val preIntent = Intent(context, PreAlarmReceiver::class.java)
+        val prePendingIntent = PendingIntent.getBroadcast(
+            context,
+            1002,
+            preIntent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (prePendingIntent != null) {
+            alarmManager.cancel(prePendingIntent)
+            prePendingIntent.cancel()
+        }
+        Log.d("AlarmScheduler", "Alarm and pre-alarm cancelled")
     }
 }

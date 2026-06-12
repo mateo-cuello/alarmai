@@ -14,10 +14,14 @@ class GeminiAgentManager {
         weatherData: String,
         newsData: String,
         calendarData: String,
+        worldCupData: String = "",
         modelName: String = "gemini-3.5-flash"
     ): String = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
-            return@withContext "Good morning! This is a demo of your AI alarm. Since your Gemini API key is not configured in settings, I am running in local simulation mode. Today's weather looks great, your calendar is clear, and quantum computing made headlines. How are you feeling today?"
+            val wcInfo = if (worldCupData.isNotBlank() && !worldCupData.contains("No matches", ignoreCase = true)) {
+                " Also, today there are some matches scheduled for the 2026 World Cup. "
+            } else " "
+            return@withContext "Good morning! This is a demo of your AI alarm. Since your Gemini API key is not configured in settings, I am running in local simulation mode. Today's weather looks great, your calendar is clear, and quantum computing made headlines.${wcInfo}How are you feeling today?"
         }
 
         try {
@@ -44,14 +48,53 @@ class GeminiAgentManager {
                 - Weather: $weatherData
                 - News: $newsData
                 - Calendar Events: $calendarData
+                - Today's FIFA World Cup 2026 Matches: $worldCupData
                 
-                Please greet the user warmly, state the time (or wish them a good morning), summarize this data in a highly engaging, concise way, and ask how they'd like to start their day.
+                Please greet the user warmly, state the time (or wish them a good morning), summarize this data (including today's World Cup matches if any are scheduled) in a highly engaging, concise way, and ask how they'd like to start their day.
             """.trimIndent()
 
             val response = session.sendMessage(initialPrompt)
             response.text ?: "Good morning! I had trouble generating your briefing. What can I do for you today?"
         } catch (e: Exception) {
             "Good morning! I encountered an error setting up the AI session: ${e.localizedMessage}. How can I assist you manually?"
+        }
+    }
+
+    fun reconstructSession(
+        apiKey: String,
+        modelName: String,
+        prompt: String,
+        response: String
+    ) {
+        if (apiKey.isBlank()) {
+            chatSession = null
+            return
+        }
+
+        try {
+            val systemInstructionText = """
+                You are a warm, helpful, and energetic morning AI assistant. 
+                Your task is to wake the user up and converse with them.
+                Since your responses will be read out loud via Text-to-Speech (TTS), you MUST:
+                1. Keep all responses very short, clear, and easy to understand when spoken (under 120 words).
+                2. Do not use markdown (no asterisks, bullet points, headers, or emojis). Speak in plain sentences.
+                3. End your statements with a friendly, open-ended question to encourage the user to reply.
+            """.trimIndent()
+
+            val model = GenerativeModel(
+                modelName = modelName,
+                apiKey = apiKey,
+                systemInstruction = content { text(systemInstructionText) }
+            )
+
+            val history = listOf(
+                content(role = "user") { text(prompt) },
+                content(role = "model") { text(response) }
+            )
+            chatSession = model.startChat(history = history)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            chatSession = null
         }
     }
 
