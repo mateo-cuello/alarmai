@@ -69,8 +69,25 @@ class WorldCupRepositoryTest {
     }
 
     @Test
-    fun testParseMatches_invalidJson() {
-        val matches = repository.parseMatches("invalid json", "2026-06-11")
-        assertTrue(matches.isEmpty())
+    fun testParseMatches_realFile() {
+        val file = java.io.File("src/main/assets/worldcup_2026.json")
+        assertTrue("worldcup_2026.json exists", file.exists())
+        val jsonString = file.readText()
+        val matches = repository.parseMatches(jsonString, "2026-06-12")
+        
+        // Assert matches for 2026-06-12 (Canada vs Bosnia and USA vs Paraguay)
+        assertEquals(2, matches.size)
+        
+        val canadaMatch = matches.find { it.team1 == "Canada" }
+        org.junit.Assert.assertNotNull(canadaMatch)
+        assertEquals("Matchday 2", canadaMatch?.round)
+        assertEquals("Bosnia & Herzegovina", canadaMatch?.team2)
+        assertEquals("Toronto", canadaMatch?.ground)
+        
+        val usaMatch = matches.find { it.team1 == "USA" }
+        org.junit.Assert.assertNotNull(usaMatch)
+        assertEquals("Matchday 2", usaMatch?.round)
+        assertEquals("Paraguay", usaMatch?.team2)
+        assertEquals("Los Angeles (Inglewood)", usaMatch?.ground)
     }
 }

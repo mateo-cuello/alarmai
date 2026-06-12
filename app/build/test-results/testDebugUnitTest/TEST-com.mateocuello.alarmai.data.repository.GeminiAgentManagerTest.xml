@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-06-12T15:10:21.220Z" hostname="INSPRION16" time="0.193">
+<testsuite name="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-06-12T15:23:48.377Z" hostname="INSPRION16" time="0.236">
   <properties/>
-  <testcase name="testDeserializationWithThoughtSignature" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.081"/>
-  <testcase name="testStartSessionDemoMode_Spanish" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.077"/>
-  <testcase name="testSendMessageDemoMode_Spanish" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.008"/>
+  <testcase name="testDeserializationWithThoughtSignature" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.117"/>
+  <testcase name="testStartSessionDemoMode_Spanish" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.085"/>
+  <testcase name="testSendMessageDemoMode_Spanish" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.007"/>
   <testcase name="testStartSessionDemoMode_English" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.004"/>
-  <testcase name="testSendMessageDemoMode_English" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.005"/>
-  <testcase name="testSerializationWithThoughtSignature" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.014"/>
-  <testcase name="testDeserializationWithThoughtSignatureSnakeCase" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.002"/>
+  <testcase name="testSendMessageDemoMode_English" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.004"/>
+  <testcase name="testSerializationWithThoughtSignature" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.013"/>
+  <testcase name="testDeserializationWithThoughtSignatureSnakeCase" classname="com.mateocuello.alarmai.data.repository.GeminiAgentManagerTest" time="0.003"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

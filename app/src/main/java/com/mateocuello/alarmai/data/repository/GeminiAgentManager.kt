@@ -274,7 +274,7 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                     val newPreference = functionCall.args["newPreference"]?.toString() ?: ""
                     prefs.saveTonePreference(newPreference)
                     responseParts.add(FunctionResponsePart(name, mapOf("success" to true)))
-                } else if (name.endsWith("getWorldCupMatchesForDate")) {
+                } else if (name.endsWith("getWorldCupMatchesForDate") || name.endsWith("getWorldCupMatchForDate")) {
                     val dateString = functionCall.args["dateString"]?.toString() ?: ""
                     val repo = WorldCupRepository()
                     val summary = repo.getTodayMatchesSummary(context, dateString)
@@ -395,10 +395,10 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
             put("name", "updateTonePreference")
             put("description", "Updates the user's preferred communication tone or style of the assistant (e.g. sarcastic, formal, energetic, funny, etc.).")
             put("parameters", JSONObject().apply {
-                put("type", "OBJECT")
+                put("type", "object")
                 put("properties", JSONObject().apply {
                     put("newPreference", JSONObject().apply {
-                        put("type", "STRING")
+                        put("type", "string")
                         put("description", "The new preferred tone or style of communication requested by the user")
                     })
                 })
@@ -412,10 +412,10 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
             put("name", "getWorldCupMatchesForDate")
             put("description", "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date.")
             put("parameters", JSONObject().apply {
-                put("type", "OBJECT")
+                put("type", "object")
                 put("properties", JSONObject().apply {
                     put("dateString", JSONObject().apply {
-                        put("type", "STRING")
+                        put("type", "string")
                         put("description", "The date to query in yyyy-MM-dd format (e.g. 2026-06-12)")
                     })
                 })
