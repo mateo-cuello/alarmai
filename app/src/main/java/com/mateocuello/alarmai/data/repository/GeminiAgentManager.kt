@@ -13,7 +13,8 @@ class GeminiAgentManager {
         apiKey: String,
         weatherData: String,
         newsData: String,
-        calendarData: String
+        calendarData: String,
+        modelName: String = "gemini-3.5-flash"
     ): String = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             return@withContext "Good morning! This is a demo of your AI alarm. Since your Gemini API key is not configured in settings, I am running in local simulation mode. Today's weather looks great, your calendar is clear, and quantum computing made headlines. How are you feeling today?"
@@ -30,7 +31,7 @@ class GeminiAgentManager {
             """.trimIndent()
 
             val model = GenerativeModel(
-                modelName = "gemini-1.5-flash",
+                modelName = modelName,
                 apiKey = apiKey,
                 systemInstruction = content { text(systemInstructionText) }
             )

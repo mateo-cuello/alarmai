@@ -9,8 +9,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.media.RingtoneManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -78,8 +80,11 @@ fun MainScreen(viewModel: MainViewModel) {
     val context = LocalContext.current
     val alarm by viewModel.alarm.collectAsState()
     val geminiKey by viewModel.geminiKey.collectAsState()
+    val geminiModel by viewModel.geminiModel.collectAsState()
     val newsKey by viewModel.newsKey.collectAsState()
     val newsTopics by viewModel.newsTopics.collectAsState()
+    val alarmVolume by viewModel.alarmVolume.collectAsState()
+    val alarmRingtoneUri by viewModel.alarmRingtoneUri.collectAsState()
 
     var showGeminiPassword by remember { mutableStateOf(false) }
     var showNewsPassword by remember { mutableStateOf(false) }
@@ -112,6 +117,37 @@ fun MainScreen(viewModel: MainViewModel) {
                 Toast.LENGTH_LONG
             ).show()
         }
+    }
+
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                result.data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            }
+            val uriString = uri?.toString() ?: ""
+            viewModel.saveAlarmRingtoneUri(uriString)
+        }
+    }
+
+    val launchRingtonePicker = {
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Ringtone")
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+            if (alarmRingtoneUri.isNotEmpty()) {
+                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(alarmRingtoneUri))
+            } else {
+                val defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, defaultUri)
+            }
+        }
+        ringtonePickerLauncher.launch(intent)
     }
 
     // Request permissions at startup
@@ -281,6 +317,90 @@ fun MainScreen(viewModel: MainViewModel) {
             }
         }
 
+        // 1.5 Sound & Volume Settings Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = "Sound Settings",
+                        tint = PrimaryPurple,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Sound & Volume",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Volume slider
+                Text(
+                    text = "Alarm Volume: $alarmVolume%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Slider(
+                        value = alarmVolume.toFloat(),
+                        onValueChange = { viewModel.saveAlarmVolume(it.toInt()) },
+                        valueRange = 0f..100f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = PrimaryPurple,
+                            activeTrackColor = PrimaryPurple,
+                            inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Ringtone selection
+                Text(
+                    text = "Ringtone",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { launchRingtonePicker() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                ) {
+                    val ringtoneTitle = getRingtoneTitle(context, alarmRingtoneUri)
+                    Text(
+                        text = ringtoneTitle,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+
         // 2. AI & API Configurations Card
         Card(
             modifier = Modifier
@@ -338,6 +458,53 @@ fun MainScreen(viewModel: MainViewModel) {
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Gemini Model Selection
+                Text(
+                    text = "Gemini LLM Model",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val models = listOf(
+                        "gemini-3.5-flash" to "Gemini 3.5 Flash",
+                        "gemini-3.1-flash-lite" to "Gemini 3.1 Flash"
+                    )
+                    models.forEach { (modelId, displayName) ->
+                        val isSelected = geminiModel == modelId
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .background(
+                                    color = if (isSelected) PrimaryPurple else Color.White.copy(alpha = 0.05f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isSelected) SecondaryPink else Color.White.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable {
+                                    viewModel.saveGeminiModel(modelId)
+                                }
+                        ) {
+                            Text(
+                                text = displayName,
+                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -496,5 +663,16 @@ private fun checkExactAlarmPermission(context: Context) {
                 context.startActivity(intent)
             }
         }
+    }
+}
+
+fun getRingtoneTitle(context: Context, uriString: String): String {
+    if (uriString.isEmpty()) return "Default Alarm Sound"
+    return try {
+        val uri = Uri.parse(uriString)
+        val ringtone = RingtoneManager.getRingtone(context, uri)
+        ringtone?.getTitle(context) ?: "Unknown Ringtone"
+    } catch (e: Exception) {
+        "Unknown Ringtone"
     }
 }

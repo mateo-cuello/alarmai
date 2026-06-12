@@ -134,6 +134,11 @@ class VoiceManager(private val context: Context) {
         }
     }
 
+    fun stopSpeaking() {
+        ttsCompleteCallback = null
+        tts?.stop()
+    }
+
     fun stopListening() {
         val mainHandler = android.os.Handler(context.mainLooper)
         mainHandler.post {

@@ -17,6 +17,9 @@ class PreferencesManager(context: Context) {
         private const val KEY_NEWS_TOPICS = "news_topics"
         private const val KEY_LAT = "latitude"
         private const val KEY_LON = "longitude"
+        private const val KEY_ALARM_VOLUME = "alarm_volume"
+        private const val KEY_ALARM_RINGTONE_URI = "alarm_ringtone_uri"
+        private const val KEY_GEMINI_MODEL = "gemini_model"
     }
 
     fun saveAlarm(alarm: Alarm) {
@@ -52,6 +55,14 @@ class PreferencesManager(context: Context) {
         return prefs.getString(KEY_GEMINI_KEY, "") ?: ""
     }
 
+    fun saveGeminiModel(model: String) {
+        prefs.edit().putString(KEY_GEMINI_MODEL, model).apply()
+    }
+
+    fun getGeminiModel(): String {
+        return prefs.getString(KEY_GEMINI_MODEL, "gemini-3.5-flash") ?: "gemini-3.5-flash"
+    }
+
     fun saveNewsKey(key: String) {
         prefs.edit().putString(KEY_NEWS_KEY, key).apply()
     }
@@ -76,8 +87,27 @@ class PreferencesManager(context: Context) {
     }
 
     fun getLocation(): Pair<Double, Double> {
-        val lat = prefs.getFloat(KEY_LAT, 0.0f).toDouble()
-        val lon = prefs.getFloat(KEY_LON, 0.0f).toDouble()
+        val lat = prefs.getFloat(KEY_LAT, -34.6037f).toDouble()
+        val lon = prefs.getFloat(KEY_LON, -58.3816f).toDouble()
+        if (lat == 0.0 && lon == 0.0) {
+            return Pair(-34.6037, -58.3816)
+        }
         return Pair(lat, lon)
+    }
+
+    fun saveAlarmVolume(volume: Int) {
+        prefs.edit().putInt(KEY_ALARM_VOLUME, volume).apply()
+    }
+
+    fun getAlarmVolume(): Int {
+        return prefs.getInt(KEY_ALARM_VOLUME, 80)
+    }
+
+    fun saveAlarmRingtoneUri(uri: String) {
+        prefs.edit().putString(KEY_ALARM_RINGTONE_URI, uri).apply()
+    }
+
+    fun getAlarmRingtoneUri(): String {
+        return prefs.getString(KEY_ALARM_RINGTONE_URI, "") ?: ""
     }
 }

@@ -11,6 +11,9 @@ import androidx.activity.viewModels
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,7 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +31,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,6 +60,7 @@ class AlarmActivity : ComponentActivity() {
                 val agentSpeech by viewModel.agentSpeech.collectAsState()
                 val userSpeech by viewModel.userSpeech.collectAsState()
                 val statusMessage by viewModel.statusMessage.collectAsState()
+                val geminiModelName by viewModel.geminiModelName.collectAsState()
 
                 // If finished, close the activity
                 LaunchedEffect(state) {
@@ -71,8 +78,11 @@ class AlarmActivity : ComponentActivity() {
                         agentSpeech = agentSpeech,
                         userSpeech = userSpeech,
                         statusMessage = statusMessage,
+                        geminiModelName = geminiModelName,
                         onDismiss = { viewModel.dismissAndTalk() },
-                        onClose = { viewModel.forceClose() }
+                        onClose = { viewModel.forceClose() },
+                        onSendText = { text -> viewModel.processUserSpeech(text) },
+                        onMicClick = { viewModel.startListeningManual() }
                     )
                 }
             }
@@ -103,8 +113,11 @@ fun AlarmScreenContent(
     agentSpeech: String,
     userSpeech: String,
     statusMessage: String,
+    geminiModelName: String,
     onDismiss: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onSendText: (String) -> Unit,
+    onMicClick: () -> Unit
 ) {
     val gradient = Brush.verticalGradient(
         colors = listOf(
@@ -163,16 +176,21 @@ fun AlarmScreenContent(
                 when (state) {
                     AlarmState.RINGING -> RingingLayout(onDismiss)
                     AlarmState.FETCHING_DATA -> LoadingLayout(statusMessage)
-                    AlarmState.SPEAKING -> SpeakingLayout(agentSpeech)
-                    AlarmState.LISTENING -> ListeningLayout(userSpeech)
+                    AlarmState.SPEAKING -> SpeakingLayout(agentSpeech, onSendText, onMicClick)
+                    AlarmState.LISTENING -> ListeningLayout(userSpeech, onSendText, onMicClick)
                     AlarmState.THINKING -> ThinkingLayout()
                     else -> {}
                 }
             }
 
             // Footer
+            val displayName = when (geminiModelName) {
+                "gemini-3.5-flash" -> "Gemini 3.5 Flash"
+                "gemini-3.1-flash-lite" -> "Gemini 3.1 Flash"
+                else -> "Gemini"
+            }
             Text(
-                text = "Powered by Gemini 1.5 Flash",
+                text = "Powered by $displayName",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.3f),
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -280,7 +298,11 @@ fun LoadingLayout(status: String) {
 }
 
 @Composable
-fun SpeakingLayout(speech: String) {
+fun SpeakingLayout(
+    speech: String,
+    onSendText: (String) -> Unit,
+    onMicClick: () -> Unit
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse_agent")
     val scale by infiniteTransition.animateFloat(
         initialValue = 0.95f,
@@ -292,48 +314,146 @@ fun SpeakingLayout(speech: String) {
         label = "agent_scale"
     )
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    var textVal by remember { mutableStateOf("") }
+
     Column(
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .size(100.dp)
-                .scale(scale)
-                .background(SecondaryPink.copy(alpha = 0.2f), shape = CircleShape)
-                .border(2.dp, SecondaryPink, CircleShape),
-            contentAlignment = Alignment.Center
+        // Top section with speaker and card
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
         ) {
-            Icon(
-                imageVector = Icons.Default.VolumeUp,
-                contentDescription = "Agent Speaking",
-                tint = SecondaryPink,
-                modifier = Modifier.size(48.dp)
-            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .scale(scale)
+                    .background(SecondaryPink.copy(alpha = 0.2f), shape = CircleShape)
+                    .border(2.dp, SecondaryPink, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                    contentDescription = "Agent Speaking",
+                    tint = SecondaryPink,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+            ) {
+                Text(
+                    text = speech,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 28.sp),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+        // Bottom section with quick actions and keyboard fallback
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = speech,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp, lineHeight = 28.sp),
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(24.dp)
-            )
+            // Quick reply chips
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf("Skip", "Read Schedule", "Exit").forEach { label ->
+                    QuickReplyChip(
+                        text = label,
+                        onClick = {
+                            onSendText(label)
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
+                    )
+                }
+            }
+
+            // Input text field and mic button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = textVal,
+                    onValueChange = { textVal = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Type a message...", color = Color.White.copy(alpha = 0.5f)) },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                if (textVal.isNotBlank()) {
+                                    onSendText(textVal)
+                                    textVal = ""
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Send",
+                                tint = PrimaryPurple
+                            )
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = PrimaryPurple,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        focusedContainerColor = Color.White.copy(alpha = 0.05f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
+                    ),
+                    shape = RoundedCornerShape(24.dp),
+                    singleLine = true
+                )
+
+                IconButton(
+                    onClick = onMicClick,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(Color(0xFF06B6D4), shape = CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Start Listening",
+                        tint = Color.White
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ListeningLayout(userSpeech: String) {
+fun ListeningLayout(
+    userSpeech: String,
+    onSendText: (String) -> Unit,
+    onMicClick: () -> Unit
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse_mic")
     val borderAlpha by infiniteTransition.animateFloat(
         initialValue = 0.2f,
@@ -345,61 +465,176 @@ fun ListeningLayout(userSpeech: String) {
         label = "mic_border"
     )
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    var textVal by remember { mutableStateOf("") }
+
     Column(
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .size(100.dp)
-                .background(Color.White.copy(alpha = 0.05f), shape = CircleShape)
-                .border(2.dp, Color(0xFF06B6D4).copy(alpha = borderAlpha), CircleShape),
-            contentAlignment = Alignment.Center
+        // Top section with listening state
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
         ) {
-            Icon(
-                imageVector = Icons.Default.Mic,
-                contentDescription = "Listening",
-                tint = Color(0xFF06B6D4),
-                modifier = Modifier.size(48.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Text(
-            text = "Listening...",
-            style = MaterialTheme.typography.headlineMedium,
-            color = Color(0xFF06B6D4),
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (userSpeech.isNotBlank()) {
-            Card(
+            Spacer(modifier = Modifier.height(24.dp))
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
+                    .size(100.dp)
+                    .background(Color.White.copy(alpha = 0.05f), shape = CircleShape)
+                    .border(2.dp, Color(0xFF06B6D4).copy(alpha = borderAlpha), CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "\"$userSpeech\"",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-                    color = Color.White.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = "Listening",
+                    tint = Color(0xFF06B6D4),
+                    modifier = Modifier.size(48.dp)
                 )
             }
-        } else {
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Text(
-                text = "Say something like 'what is the weather?'",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.5f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                text = "Listening...",
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color(0xFF06B6D4),
+                fontWeight = FontWeight.Bold
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (userSpeech.isNotBlank()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
+                ) {
+                    Text(
+                        text = "\"$userSpeech\"",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
+                        color = Color.White.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                Text(
+                    text = "Say something like 'what is the weather?'",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White.copy(alpha = 0.5f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
+
+        // Bottom section with quick actions and keyboard fallback
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Quick reply chips
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf("Skip", "Read Schedule", "Exit").forEach { label ->
+                    QuickReplyChip(
+                        text = label,
+                        onClick = {
+                            onSendText(label)
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
+                    )
+                }
+            }
+
+            // Input text field and mic button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = textVal,
+                    onValueChange = { textVal = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Type a message...", color = Color.White.copy(alpha = 0.5f)) },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                if (textVal.isNotBlank()) {
+                                    onSendText(textVal)
+                                    textVal = ""
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Send",
+                                tint = PrimaryPurple
+                            )
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = PrimaryPurple,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                        focusedContainerColor = Color.White.copy(alpha = 0.05f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
+                    ),
+                    shape = RoundedCornerShape(24.dp),
+                    singleLine = true
+                )
+
+                IconButton(
+                    onClick = onMicClick,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(Color(0xFF06B6D4), shape = CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Start Listening",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun QuickReplyChip(
+    text: String,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.08f))
+            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.9f)
+        )
     }
 }
 

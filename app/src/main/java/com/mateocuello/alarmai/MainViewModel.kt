@@ -18,11 +18,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _geminiKey = MutableStateFlow(prefs.getGeminiKey())
     val geminiKey: StateFlow<String> = _geminiKey
 
+    private val _geminiModel = MutableStateFlow(prefs.getGeminiModel())
+    val geminiModel: StateFlow<String> = _geminiModel
+
     private val _newsKey = MutableStateFlow(prefs.getNewsKey())
     val newsKey: StateFlow<String> = _newsKey
 
     private val _newsTopics = MutableStateFlow(prefs.getNewsTopics())
     val newsTopics: StateFlow<String> = _newsTopics
+
+    private val _alarmVolume = MutableStateFlow(prefs.getAlarmVolume())
+    val alarmVolume: StateFlow<Int> = _alarmVolume
+
+    private val _alarmRingtoneUri = MutableStateFlow(prefs.getAlarmRingtoneUri())
+    val alarmRingtoneUri: StateFlow<String> = _alarmRingtoneUri
 
     fun updateAlarmTime(hour: Int, minute: Int) {
         val current = _alarm.value
@@ -62,6 +71,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _geminiKey.value = key
     }
 
+    fun saveGeminiModel(model: String) {
+        prefs.saveGeminiModel(model)
+        _geminiModel.value = model
+    }
+
     fun saveNewsKey(key: String) {
         prefs.saveNewsKey(key)
         _newsKey.value = key
@@ -70,5 +84,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun saveNewsTopics(topics: String) {
         prefs.saveNewsTopics(topics)
         _newsTopics.value = topics
+    }
+
+    fun saveAlarmVolume(volume: Int) {
+        prefs.saveAlarmVolume(volume)
+        _alarmVolume.value = volume
+    }
+
+    fun saveAlarmRingtoneUri(uri: String) {
+        prefs.saveAlarmRingtoneUri(uri)
+        _alarmRingtoneUri.value = uri
     }
 }

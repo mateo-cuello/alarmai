@@ -18,6 +18,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.mateocuello.alarmai.MainActivity
 import com.mateocuello.alarmai.ui.alarm.AlarmActivity
+import com.mateocuello.alarmai.data.local.PreferencesManager
 
 class AlarmService : Service() {
     private var mediaPlayer: MediaPlayer? = null
@@ -76,13 +77,22 @@ class AlarmService : Service() {
 
     private fun playAlarmSound() {
         try {
-            var alarmUri: Uri? = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            val prefs = PreferencesManager(this)
+            val ringtoneUriStr = prefs.getAlarmRingtoneUri()
+            var alarmUri: Uri? = if (ringtoneUriStr.isNotEmpty()) Uri.parse(ringtoneUriStr) else null
+
+            if (alarmUri == null) {
+                alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            }
             if (alarmUri == null) {
                 alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
             }
             if (alarmUri == null) {
                 alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             }
+
+            val volumePercent = prefs.getAlarmVolume()
+            val volumeFloat = volumePercent / 100f
 
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(this@AlarmService, alarmUri!!)
@@ -93,10 +103,11 @@ class AlarmService : Service() {
                         .build()
                 )
                 isLooping = true
+                setVolume(volumeFloat, volumeFloat)
                 prepare()
                 start()
             }
-            Log.d("AlarmService", "Playing alarm sound")
+            Log.d("AlarmService", "Playing alarm sound with volume $volumePercent%")
         } catch (e: Exception) {
             Log.e("AlarmService", "Failed to play alarm sound: ${e.localizedMessage}")
         }

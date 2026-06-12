@@ -37,8 +37,34 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val geminiAgentManager = GeminiAgentManager()
     private val voiceManager = VoiceManager(application)
 
+    private var consecutiveSttErrors = 0
+
+    private val _geminiModelName = MutableStateFlow(prefs.getGeminiModel())
+    val geminiModelName: StateFlow<String> = _geminiModelName
+
     private val _uiState = MutableStateFlow(AlarmState.RINGING)
     val uiState: StateFlow<AlarmState> = _uiState
+
+    private var prefetchedLocation: Pair<Double, Double>? = null
+
+    init {
+        prefetchLocation()
+    }
+
+    private fun prefetchLocation() {
+        viewModelScope.launch {
+            try {
+                val location = locationProvider.getCurrentLocation()
+                if (location != null) {
+                    prefetchedLocation = location
+                    prefs.saveLocation(location.first, location.second)
+                    Log.d("AlarmViewModel", "Prefetched and saved location: $location")
+                }
+            } catch (e: Exception) {
+                Log.e("AlarmViewModel", "Error prefetching location: ${e.localizedMessage}")
+            }
+        }
+    }
 
     private val _agentSpeech = MutableStateFlow("Tap 'Dismiss & Talk' to start your day.")
     val agentSpeech: StateFlow<String> = _agentSpeech
@@ -58,16 +84,10 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = AlarmState.FETCHING_DATA
             _statusMessage.value = "Detecting location..."
             
-            // Get location coordinates
-            val location = locationProvider.getCurrentLocation()
-            val (lat, lon) = if (location != null) {
-                // Save location cache
-                prefs.saveLocation(location.first, location.second)
-                location
-            } else {
-                // Read from cache fallback or defaults (0.0, 0.0)
-                prefs.getLocation()
-            }
+            // Get location coordinates (either pre-fetched or fetch on demand)
+            val (lat, lon) = prefetchedLocation
+                ?: locationProvider.getCurrentLocation()?.also { prefs.saveLocation(it.first, it.second) }
+                ?: prefs.getLocation()
             
             _statusMessage.value = "Fetching weather & news..."
             val weatherData = weatherRepository.getWeather(lat, lon)
@@ -81,11 +101,13 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
             
             _statusMessage.value = "Calling Gemini AI..."
             val geminiKey = prefs.getGeminiKey()
+            val modelName = prefs.getGeminiModel()
             val initialBriefing = geminiAgentManager.startSession(
                 apiKey = geminiKey,
                 weatherData = weatherData,
                 newsData = newsData,
-                calendarData = calendarData
+                calendarData = calendarData,
+                modelName = modelName
             )
             
             speakAgentResponse(initialBriefing)
@@ -107,14 +129,16 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = AlarmState.LISTENING
         voiceManager.startListening(
             onResult = { result ->
+                consecutiveSttErrors = 0
                 _userSpeech.value = result
                 processUserSpeech(result)
             },
             onError = { error ->
                 Log.e("AlarmViewModel", "STT Error: $error")
-                // If it timed out or got empty speech, ask again or end gracefully
-                if (error == "No speech input") {
-                    speakAgentResponse("Are you still there? Wish you a good day!")
+                consecutiveSttErrors++
+                if (consecutiveSttErrors >= 3) {
+                    _uiState.value = AlarmState.SPEAKING
+                    speakAgentResponse("I couldn't catch that. Please type your message using the keyboard or tap the mic button to retry.")
                 } else {
                     _statusMessage.value = "Did not catch that: $error"
                     _uiState.value = AlarmState.SPEAKING
@@ -128,7 +152,17 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    private fun processUserSpeech(text: String) {
+    fun startListeningManual() {
+        consecutiveSttErrors = 0
+        voiceManager.stopSpeaking()
+        voiceManager.stopListening()
+        startListeningForUser()
+    }
+
+    fun processUserSpeech(text: String) {
+        voiceManager.stopListening()
+        voiceManager.stopSpeaking()
+
         // If the user says goodbye or close, finish the session
         val goodbyeKeywords = listOf("goodbye", "exit", "stop", "close", "bye", "adios")
         if (goodbyeKeywords.any { text.contains(it, ignoreCase = true) }) {
