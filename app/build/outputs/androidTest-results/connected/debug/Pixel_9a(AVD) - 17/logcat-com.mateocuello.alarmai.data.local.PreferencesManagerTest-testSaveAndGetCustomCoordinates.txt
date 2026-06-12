@@ -1,0 +1,2 @@
+06-12 01:53:52.200 27224 27250 I TestRunner: started: testSaveAndGetCustomCoordinates(com.mateocuello.alarmai.data.local.PreferencesManagerTest)
+06-12 01:53:52.229 27224 27250 I TestRunner: finished: testSaveAndGetCustomCoordinates(com.mateocuello.alarmai.data.local.PreferencesManagerTest)

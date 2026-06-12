@@ -26,40 +26,9 @@ class AlarmScheduler(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val nextTime = AlarmTimeCalculator.calculateNextAlarmTime(alarm, System.currentTimeMillis(), fromReceiver)
         val calendar = Calendar.getInstance().apply {
-            timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, alarm.hour)
-            set(Calendar.MINUTE, alarm.minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        val nowTime = System.currentTimeMillis()
-        if (alarm.daysOfWeek.isNotEmpty()) {
-            val startOffset = if (fromReceiver) 1 else 0
-            var found = false
-            for (offset in startOffset..7) {
-                val testCalendar = (calendar.clone() as Calendar).apply {
-                    add(Calendar.DAY_OF_YEAR, offset)
-                }
-                val testDayOfWeek = testCalendar.get(Calendar.DAY_OF_WEEK)
-                if (alarm.daysOfWeek.contains(testDayOfWeek)) {
-                    if (offset > 0 || testCalendar.timeInMillis > nowTime) {
-                        calendar.timeInMillis = testCalendar.timeInMillis
-                        found = true
-                        break
-                    }
-                }
-            }
-            if (!found) {
-                if (calendar.timeInMillis <= nowTime) {
-                    calendar.add(Calendar.DAY_OF_YEAR, 1)
-                }
-            }
-        } else {
-            if (calendar.timeInMillis <= nowTime) {
-                calendar.add(Calendar.DAY_OF_YEAR, 1)
-            }
+            timeInMillis = nextTime
         }
 
         try {

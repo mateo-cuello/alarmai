@@ -1,0 +1,2 @@
+06-12 01:53:52.336 27224 27250 I TestRunner: started: testAlarmDefaultValues(com.mateocuello.alarmai.data.local.PreferencesManagerTest)
+06-12 01:53:52.343 27224 27250 I TestRunner: finished: testAlarmDefaultValues(com.mateocuello.alarmai.data.local.PreferencesManagerTest)
