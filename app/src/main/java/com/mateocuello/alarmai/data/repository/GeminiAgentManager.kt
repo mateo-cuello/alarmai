@@ -13,7 +13,11 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class GeminiAgentManager(private val context: Context, private val prefs: PreferencesManager) {
+class GeminiAgentManager @JvmOverloads constructor(
+    private val context: Context,
+    private val prefs: PreferencesManager,
+    private val worldCupRepository: WorldCupRepository = WorldCupRepository()
+) {
 
     data class Content(
         val role: String,
@@ -320,16 +324,16 @@ class GeminiAgentManager(private val context: Context, private val prefs: Prefer
                     val dateString = functionCall.args["dateString"]?.toString()
                         ?: functionCall.args["date"]?.toString()
                         ?: functionCall.args["date_string"]?.toString()
-                        ?: ""
-                    val repo = WorldCupRepository()
+                         ?: ""
+                    val repo = worldCupRepository
                     val summary = repo.getTodayMatchesSummary(context, dateString)
                     responseParts.add(FunctionResponsePart(name, mapOf("summary" to summary)))
                 } else if (name.endsWith("getWorldCupMatchesByTeam")) {
                     val teamName = functionCall.args["teamName"]?.toString()
                         ?: functionCall.args["team_name"]?.toString()
                         ?: functionCall.args["team"]?.toString()
-                        ?: ""
-                    val repo = WorldCupRepository()
+                         ?: ""
+                    val repo = worldCupRepository
                     val summary = repo.getMatchesByTeam(context, teamName)
                     responseParts.add(FunctionResponsePart(name, mapOf("summary" to summary)))
                 } else if (name.endsWith("searchNews")) {

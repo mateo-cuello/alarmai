@@ -37,15 +37,16 @@ data class ChatMessage(
     val text: String
 )
 
-class AlarmViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val prefs = PreferencesManager(application)
-    private val locationProvider = LocationProvider(application)
-    private val weatherRepository = WeatherRepository()
-    private val newsRepository = NewsRepository()
-    private val calendarRepository = CalendarRepository(application)
-    private val geminiAgentManager = GeminiAgentManager(application, prefs)
-    private val voiceManager = VoiceManager(application)
+class AlarmViewModel(
+    application: Application,
+    private val prefs: PreferencesManager = PreferencesManager(application),
+    private val locationProvider: LocationProvider = LocationProvider(application),
+    private val weatherRepository: WeatherRepository = WeatherRepository(),
+    private val newsRepository: NewsRepository = NewsRepository(),
+    private val calendarRepository: CalendarRepository = CalendarRepository(application),
+    private val geminiAgentManager: GeminiAgentManager = GeminiAgentManager(application, prefs),
+    private val voiceManager: VoiceManager = VoiceManager(application, prefs)
+) : AndroidViewModel(application) {
 
     private var noSpeechTimeoutJob: kotlinx.coroutines.Job? = null
     private var consecutiveSttErrors = 0
@@ -103,68 +104,78 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     fun dismissAndTalk() {
         viewModelScope.launch {
-            // 1. Stop the alarm service ringtone
-            getApplication<Application>().stopService(Intent(getApplication(), AlarmService::class.java))
-            
-            val geminiKey = prefs.getGeminiKey()
-            val modelName = prefs.getGeminiModel()
-            
-            // Check for valid cached pre-fetch briefing (less than 5 minutes old = 300,000 ms)
-            val (cachedBriefing, cachedPrompt, cachedTime) = prefs.getPrefetchedBriefing()
-            val isCacheValid = cachedBriefing.isNotEmpty() && (System.currentTimeMillis() - cachedTime < 300_000)
-            
-            if (isCacheValid) {
-                Log.d("AlarmViewModel", "Using valid prefetched briefing!")
-                // Reconstruct the Gemini session with the prompt and briefing history
-                geminiAgentManager.reconstructSession(
-                    apiKey = geminiKey,
-                    modelName = modelName,
-                    prompt = cachedPrompt,
-                    response = cachedBriefing
-                )
-                // Clear the cache so it's not reused next time
-                prefs.clearPrefetchedBriefing()
-                // Speak immediately!
-                speakAgentResponse(cachedBriefing)
-            } else {
-                Log.d("AlarmViewModel", "No valid prefetched briefing. Loading on demand.")
-                // 2. Fetch data & start AI agent
-                val isEs = prefs.getLanguage() == "es"
-                _uiState.value = AlarmState.FETCHING_DATA
-                _statusMessage.value = if (isEs) "Detectando ubicación..." else "Detecting location..."
+            try {
+                // 1. Stop the alarm service ringtone
+                getApplication<Application>().stopService(Intent(getApplication(), AlarmService::class.java))
                 
-                // Get location coordinates (either pre-fetched or fetch on demand)
-                val (lat, lon) = prefetchedLocation
-                    ?: locationProvider.getCurrentLocation()?.also { prefs.saveLocation(it.first, it.second) }
-                    ?: prefs.getLocation()
-                
-                _statusMessage.value = if (isEs) "Obteniendo clima y noticias..." else "Fetching weather & news..."
-                val weatherData = weatherRepository.getWeather(lat, lon)
-                
-                val newsTopics = prefs.getNewsTopics()
-                val language = prefs.getLanguage()
-                val newsData = newsRepository.getNews(newsTopics, language)
-                
-                _statusMessage.value = if (isEs) "Leyendo agenda de hoy..." else "Reading today's schedule..."
-                val calendarData = calendarRepository.getTodayEvents()
-                
-                _statusMessage.value = if (isEs) "Buscando partidos del Mundial..." else "Checking World Cup matches..."
-                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-                val todayDateString = sdf.format(java.util.Date())
-                val worldCupRepository = com.mateocuello.alarmai.data.repository.WorldCupRepository()
-                val worldCupData = worldCupRepository.getTodayMatchesSummary(getApplication(), todayDateString)
+                // Track voice session to hold audio focus smoothly
+                voiceManager.startSession()
 
-                _statusMessage.value = if (isEs) "Llamando a Gemini AI..." else "Calling Gemini AI..."
-                val initialBriefing = geminiAgentManager.startSession(
-                    apiKey = geminiKey,
-                    weatherData = weatherData,
-                    newsData = newsData,
-                    calendarData = calendarData,
-                    worldCupData = worldCupData,
-                    modelName = modelName
-                )
+                val geminiKey = prefs.getGeminiKey()
+                val modelName = prefs.getGeminiModel()
                 
-                speakAgentResponse(initialBriefing)
+                // Check for valid cached pre-fetch briefing (less than 5 minutes old = 300,000 ms)
+                val (cachedBriefing, cachedPrompt, cachedTime) = prefs.getPrefetchedBriefing()
+                val isCacheValid = cachedBriefing.isNotEmpty() && (System.currentTimeMillis() - cachedTime < 300_000)
+                
+                if (isCacheValid) {
+                    Log.d("AlarmViewModel", "Using valid prefetched briefing!")
+                    // Reconstruct the Gemini session with the prompt and briefing history
+                    geminiAgentManager.reconstructSession(
+                        apiKey = geminiKey,
+                        modelName = modelName,
+                        prompt = cachedPrompt,
+                        response = cachedBriefing
+                    )
+                    // Clear the cache so it's not reused next time
+                    prefs.clearPrefetchedBriefing()
+                    // Speak immediately!
+                    speakAgentResponse(cachedBriefing)
+                } else {
+                    Log.d("AlarmViewModel", "No valid prefetched briefing. Loading on demand.")
+                    // 2. Fetch data & start AI agent
+                    val isEs = prefs.getLanguage() == "es"
+                    _uiState.value = AlarmState.FETCHING_DATA
+                    _statusMessage.value = if (isEs) "Detectando ubicación..." else "Detecting location..."
+                    
+                    // Get location coordinates (either pre-fetched or fetch on demand)
+                    val (lat, lon) = prefetchedLocation
+                        ?: locationProvider.getCurrentLocation()?.also { prefs.saveLocation(it.first, it.second) }
+                        ?: prefs.getLocation()
+                    
+                    _statusMessage.value = if (isEs) "Obteniendo clima y noticias..." else "Fetching weather & news..."
+                    val weatherData = weatherRepository.getWeather(lat, lon)
+                    
+                    val newsTopics = prefs.getNewsTopics()
+                    val language = prefs.getLanguage()
+                    val newsData = newsRepository.getNews(newsTopics, language)
+                    
+                    _statusMessage.value = if (isEs) "Leyendo agenda de hoy..." else "Reading today's schedule..."
+                    val calendarData = calendarRepository.getTodayEvents()
+                    
+                    _statusMessage.value = if (isEs) "Buscando partidos del Mundial..." else "Checking World Cup matches..."
+                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                    val todayDateString = sdf.format(java.util.Date())
+                    val worldCupRepository = com.mateocuello.alarmai.data.repository.WorldCupRepository()
+                    val worldCupData = worldCupRepository.getTodayMatchesSummary(getApplication(), todayDateString)
+
+                    _statusMessage.value = if (isEs) "Llamando a Gemini AI..." else "Calling Gemini AI..."
+                    val initialBriefing = geminiAgentManager.startSession(
+                        apiKey = geminiKey,
+                        weatherData = weatherData,
+                        newsData = newsData,
+                        calendarData = calendarData,
+                        worldCupData = worldCupData,
+                        modelName = modelName
+                    )
+                    
+                    speakAgentResponse(initialBriefing)
+                }
+            } catch (e: Exception) {
+                Log.e("AlarmViewModel", "Fatal initialization error", e)
+                val isEs = prefs.getLanguage() == "es"
+                _statusMessage.value = if (isEs) "Error al iniciar: ${e.localizedMessage}" else "Error during initialization: ${e.localizedMessage}"
+                _uiState.value = AlarmState.ERROR
             }
         }
     }
@@ -202,7 +213,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         voiceManager.speak(text) {
             // Callback when agent finishes speaking: add delay to let TTS fully release audio
             viewModelScope.launch {
-                voiceManager.stopSpeaking()
+                // Do not stopSpeaking() here as it nullifies callback (which is already executed)
                 kotlinx.coroutines.delay(600)
                 startListeningForUser()
             }
@@ -237,8 +248,10 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                 } else {
-                    Log.w("AlarmViewModel", "STT max retries reached, staying in LISTENING state")
-                    // Stop retrying to avoid infinite loop, user can tap mic to restart
+                    Log.w("AlarmViewModel", "STT max retries reached, transitioning to ERROR")
+                    val isEs = prefs.getLanguage() == "es"
+                    _statusMessage.value = if (isEs) "No se pudo iniciar la entrada de voz." else "Could not start voice input."
+                    _uiState.value = AlarmState.ERROR
                 }
             },
             onRmsChanged = { rmsdB ->
@@ -276,6 +289,7 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
                 addChatMessage(MessageSender.AGENT, goodbyeMsg)
                 _uiState.value = AlarmState.SPEAKING
                 voiceManager.speak(goodbyeMsg) {
+                    voiceManager.endSession()
                     _uiState.value = AlarmState.FINISHED
                 }
             }
@@ -284,15 +298,52 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
         _uiState.value = AlarmState.THINKING
         viewModelScope.launch {
-            val response = geminiAgentManager.sendMessage(text)
-            speakAgentResponse(response)
+            try {
+                val response = geminiAgentManager.sendMessage(text)
+                speakAgentResponse(response)
+            } catch (e: Exception) {
+                Log.e("AlarmViewModel", "Error sending message to Gemini", e)
+                val isEs = prefs.getLanguage() == "es"
+                _statusMessage.value = if (isEs) "Error de conexión con Gemini." else "Connection error with Gemini."
+                _uiState.value = AlarmState.ERROR
+            }
+        }
+    }
+
+    fun retry() {
+        val hasMessages = _chatMessages.value.isNotEmpty()
+        if (!hasMessages) {
+            // Failed during initial loading, retry everything
+            dismissAndTalk()
+        } else {
+            // Failed during chat turn, attempt to re-send the last user query
+            val lastUserMessage = _chatMessages.value.lastOrNull { it.sender == MessageSender.USER }?.text
+            if (lastUserMessage != null) {
+                _uiState.value = AlarmState.THINKING
+                viewModelScope.launch {
+                    try {
+                        val response = geminiAgentManager.sendMessage(lastUserMessage)
+                        speakAgentResponse(response)
+                    } catch (e: Exception) {
+                        Log.e("AlarmViewModel", "Error during retry send", e)
+                        val isEs = prefs.getLanguage() == "es"
+                        _statusMessage.value = if (isEs) "Error de conexión con Gemini." else "Connection error with Gemini."
+                        _uiState.value = AlarmState.ERROR
+                    }
+                }
+            } else {
+                // Fallback: manually trigger mic listening again
+                startListeningManual()
+            }
         }
     }
 
     fun forceClose() {
         cancelNoSpeechTimeout()
         // Stop any current speaking or listening
+        voiceManager.stopSpeaking()
         voiceManager.stopListening()
+        voiceManager.endSession()
         _micVolume.value = 0f
         getApplication<Application>().stopService(Intent(getApplication(), AlarmService::class.java))
         _uiState.value = AlarmState.FINISHED

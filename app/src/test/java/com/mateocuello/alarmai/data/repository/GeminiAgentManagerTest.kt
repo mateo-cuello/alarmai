@@ -24,6 +24,9 @@ class GeminiAgentManagerTest {
     @Mock
     private lateinit var prefs: PreferencesManager
 
+    @Mock
+    private lateinit var worldCupRepository: WorldCupRepository
+
     private lateinit var geminiAgentManager: GeminiAgentManager
 
     @Before
@@ -31,7 +34,7 @@ class GeminiAgentManagerTest {
         MockitoAnnotations.openMocks(this)
         `when`(context.assets).thenReturn(assetManager)
         `when`(assetManager.open("worldcup_context.txt")).thenReturn(ByteArrayInputStream("Mock World Cup Context".toByteArray()))
-        geminiAgentManager = GeminiAgentManager(context, prefs)
+        geminiAgentManager = GeminiAgentManager(context, prefs, worldCupRepository)
     }
 
     @Test

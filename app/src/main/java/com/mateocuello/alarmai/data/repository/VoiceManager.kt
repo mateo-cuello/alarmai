@@ -15,16 +15,23 @@ import android.util.Log
 import com.mateocuello.alarmai.data.local.PreferencesManager
 import java.util.Locale
 
-class VoiceManager(private val context: Context) {
-    private val prefs = PreferencesManager(context)
+class VoiceManager(
+    private val context: Context,
+    private val prefs: PreferencesManager = PreferencesManager(context),
+    private val ttsFactory: (Context, TextToSpeech.OnInitListener) -> TextToSpeech = { ctx, listener -> TextToSpeech(ctx, listener) },
+    private val speechRecognizerFactory: (Context) -> SpeechRecognizer = { ctx -> SpeechRecognizer.createSpeechRecognizer(ctx) }
+) {
     private var tts: TextToSpeech? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var isTtsInitialized = false
+    
+    private val ttsLock = Any()
     private var ttsCompleteCallback: (() -> Unit)? = null
 
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var isTtsActive = false
     private var isListeningActive = false
+    private var isSessionActive = false // Session tracking to hold focus
 
     private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
@@ -57,6 +64,16 @@ class VoiceManager(private val context: Context) {
             .build()
     }
 
+    fun startSession() {
+        isSessionActive = true
+        requestAudioFocus()
+    }
+
+    fun endSession() {
+        isSessionActive = false
+        abandonAudioFocus()
+    }
+
     private fun requestAudioFocus() {
         try {
             val result = audioManager.requestAudioFocus(focusRequest)
@@ -84,7 +101,8 @@ class VoiceManager(private val context: Context) {
     }
 
     private fun checkAndAbandonFocus() {
-        if (!isTtsActive && !isListeningActive) {
+        // Abandon only if no active conversation session and both modules are quiet
+        if (!isSessionActive && !isTtsActive && !isListeningActive) {
             abandonAudioFocus()
         }
     }
@@ -160,7 +178,7 @@ class VoiceManager(private val context: Context) {
     }
 
     private fun initTts() {
-        tts = TextToSpeech(context) { status ->
+        tts = ttsFactory(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 val language = prefs.getLanguage()
                 val locale = if (language == "es") Locale("es", "ES") else Locale.US
@@ -192,18 +210,39 @@ class VoiceManager(private val context: Context) {
 
             override fun onDone(utteranceId: String?) {
                 Log.d("VoiceManager", "TTS Finished speaking")
-                ttsCompleteCallback?.invoke()
+                val callback = synchronized(ttsLock) {
+                    val cb = ttsCompleteCallback
+                    ttsCompleteCallback = null
+                    isTtsActive = false
+                    cb
+                }
+                callback?.invoke()
+                checkAndAbandonFocus()
             }
 
             @Deprecated("Deprecated in Java")
             override fun onError(utteranceId: String?) {
                 Log.e("VoiceManager", "TTS Error")
-                ttsCompleteCallback?.invoke()
+                val callback = synchronized(ttsLock) {
+                    val cb = ttsCompleteCallback
+                    ttsCompleteCallback = null
+                    isTtsActive = false
+                    cb
+                }
+                callback?.invoke()
+                checkAndAbandonFocus()
             }
 
             override fun onError(utteranceId: String?, errorCode: Int) {
                 Log.e("VoiceManager", "TTS Error: $errorCode")
-                ttsCompleteCallback?.invoke()
+                val callback = synchronized(ttsLock) {
+                    val cb = ttsCompleteCallback
+                    ttsCompleteCallback = null
+                    isTtsActive = false
+                    cb
+                }
+                callback?.invoke()
+                checkAndAbandonFocus()
             }
         })
     }
@@ -215,13 +254,9 @@ class VoiceManager(private val context: Context) {
             return
         }
         requestAudioFocus()
-        isTtsActive = true
-        ttsCompleteCallback = {
-            isTtsActive = false
-            // Explicitly stop TTS engine to fully release audio resources
-            tts?.stop()
-            checkAndAbandonFocus()
-            onComplete()
+        synchronized(ttsLock) {
+            isTtsActive = true
+            ttsCompleteCallback = onComplete
         }
         val params = Bundle().apply {
             putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "alarm_briefing")
@@ -234,9 +269,14 @@ class VoiceManager(private val context: Context) {
         onError: (String) -> Unit,
         onRmsChanged: (Float) -> Unit
     ) {
-        // Run on Main UI Thread because SpeechRecognizer must be created/called on the main thread
         val mainHandler = android.os.Handler(context.mainLooper)
         mainHandler.post {
+            // Check availability first
+            if (!SpeechRecognizer.isRecognitionAvailable(context)) {
+                onError("Speech recognition not available on this device")
+                return@post
+            }
+
             try {
                 if (speechRecognizer != null) {
                     speechRecognizer?.destroy()
@@ -244,87 +284,98 @@ class VoiceManager(private val context: Context) {
                 requestAudioFocus()
                 isListeningActive = true
 
-                // Mute beep BEFORE creating the recognizer to catch initialization sounds
+                // Mute beep BEFORE delayed creation
                 muteBeep()
                 
-                // Small delay to let mute take effect
-                android.os.SystemClock.sleep(50)
-                
-                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
+                // Use a non-blocking postDelayed instead of SystemClock.sleep(50)
+                mainHandler.postDelayed({
+                    if (!isListeningActive) return@postDelayed // Abort if stopped during delay
+                    try {
+                        speechRecognizer = speechRecognizerFactory(context)
 
-                val language = prefs.getLanguage()
-                val locale = if (language == "es") Locale("es", "ES") else Locale.US
-                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.toLanguageTag())
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale.toLanguageTag())
-                    putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, locale.toLanguageTag())
-                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-                }
+                        val language = prefs.getLanguage()
+                        val locale = if (language == "es") Locale("es", "ES") else Locale.US
+                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.toLanguageTag())
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale.toLanguageTag())
+                            putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, locale.toLanguageTag())
+                            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                        }
 
-                speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-                    override fun onReadyForSpeech(params: Bundle?) {
-                        Log.d("VoiceManager", "Ready for speech (beep muted)")
-                    }
-                    override fun onBeginningOfSpeech() {}
-                    override fun onRmsChanged(rmsdB: Float) {
-                        onRmsChanged(rmsdB)
-                    }
-                    override fun onBufferReceived(buffer: ByteArray?) {}
-                    override fun onEndOfSpeech() {}
+                        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                            override fun onReadyForSpeech(params: Bundle?) {
+                                Log.d("VoiceManager", "Ready for speech (beep muted)")
+                            }
+                            override fun onBeginningOfSpeech() {}
+                            override fun onRmsChanged(rmsdB: Float) {
+                                onRmsChanged(rmsdB)
+                            }
+                            override fun onBufferReceived(buffer: ByteArray?) {}
+                            override fun onEndOfSpeech() {}
 
-                    override fun onError(error: Int) {
+                            override fun onError(error: Int) {
+                                unmuteBeep()
+                                isListeningActive = false
+                                checkAndAbandonFocus()
+                                val errorMessage = when (error) {
+                                    SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+                                    SpeechRecognizer.ERROR_CLIENT -> "Client-side error"
+                                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
+                                    SpeechRecognizer.ERROR_NETWORK -> "Network error"
+                                    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
+                                    SpeechRecognizer.ERROR_NO_MATCH -> "No speech match found"
+                                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Speech engine busy"
+                                    SpeechRecognizer.ERROR_SERVER -> "Server error"
+                                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
+                                    else -> "Unknown recognizer error"
+                                }
+                                Log.e("VoiceManager", "Speech error: $errorMessage")
+                                onError(errorMessage)
+                            }
+
+                            override fun onResults(results: Bundle?) {
+                                unmuteBeep()
+                                isListeningActive = false
+                                checkAndAbandonFocus()
+                                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                                val text = matches?.firstOrNull()
+                                if (!text.isNullOrBlank()) {
+                                    onResult(text)
+                                } else {
+                                    onError("Empty speech result")
+                                }
+                            }
+
+                            override fun onPartialResults(partialResults: Bundle?) {}
+                            override fun onEvent(eventType: Int, params: Bundle?) {}
+                        })
+
+                        speechRecognizer?.startListening(intent)
+                    } catch (e: Exception) {
                         unmuteBeep()
                         isListeningActive = false
                         checkAndAbandonFocus()
-                        val errorMessage = when (error) {
-                            SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
-                            SpeechRecognizer.ERROR_CLIENT -> "Client-side error"
-                            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
-                            SpeechRecognizer.ERROR_NETWORK -> "Network error"
-                            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
-                            SpeechRecognizer.ERROR_NO_MATCH -> "No speech match found"
-                            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Speech engine busy"
-                            SpeechRecognizer.ERROR_SERVER -> "Server error"
-                            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
-                            else -> "Unknown recognizer error"
-                        }
-                        Log.e("VoiceManager", "Speech error: $errorMessage")
-                        onError(errorMessage)
+                        Log.e("VoiceManager", "Failed to start listening: ${e.localizedMessage}")
+                        onError("Failed to start listening: ${e.localizedMessage}")
                     }
-
-                    override fun onResults(results: Bundle?) {
-                        unmuteBeep()
-                        isListeningActive = false
-                        checkAndAbandonFocus()
-                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                        val text = matches?.firstOrNull()
-                        if (!text.isNullOrBlank()) {
-                            onResult(text)
-                        } else {
-                            onError("Empty speech result")
-                        }
-                    }
-
-                    override fun onPartialResults(partialResults: Bundle?) {}
-                    override fun onEvent(eventType: Int, params: Bundle?) {}
-                })
-
-                speechRecognizer?.startListening(intent)
+                }, 50)
             } catch (e: Exception) {
                 unmuteBeep()
                 isListeningActive = false
                 checkAndAbandonFocus()
-                Log.e("VoiceManager", "Failed to start listening: ${e.localizedMessage}")
+                Log.e("VoiceManager", "Failed to post listening initialization: ${e.localizedMessage}")
                 onError("Failed to start listening: ${e.localizedMessage}")
             }
         }
     }
 
     fun stopSpeaking() {
-        ttsCompleteCallback = null
+        synchronized(ttsLock) {
+            ttsCompleteCallback = null
+            isTtsActive = false
+        }
         tts?.stop()
-        isTtsActive = false
         checkAndAbandonFocus()
     }
 
@@ -332,17 +383,22 @@ class VoiceManager(private val context: Context) {
         val mainHandler = android.os.Handler(context.mainLooper)
         mainHandler.post {
             speechRecognizer?.stopListening()
+            unmuteBeep() // Crucial restoration point
             isListeningActive = false
             checkAndAbandonFocus()
         }
     }
 
     fun shutdown() {
+        isSessionActive = false
         unmuteBeep()
+        synchronized(ttsLock) {
+            ttsCompleteCallback = null
+            isTtsActive = false
+        }
         tts?.stop()
         tts?.shutdown()
         speechRecognizer?.destroy()
-        isTtsActive = false
         isListeningActive = false
         abandonAudioFocus()
     }

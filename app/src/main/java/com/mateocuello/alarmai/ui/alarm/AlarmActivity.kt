@@ -89,7 +89,8 @@ class AlarmActivity : ComponentActivity() {
                         onDismiss = { viewModel.dismissAndTalk() },
                         onClose = { viewModel.forceClose() },
                         onSendText = { text -> viewModel.processUserSpeech(text) },
-                        onMicClick = { viewModel.startListeningManual() }
+                        onMicClick = { viewModel.startListeningManual() },
+                        onRetry = { viewModel.retry() }
                     )
                 }
             }
@@ -125,7 +126,8 @@ fun AlarmScreenContent(
     onDismiss: () -> Unit,
     onClose: () -> Unit,
     onSendText: (String) -> Unit,
-    onMicClick: () -> Unit
+    onMicClick: () -> Unit,
+    onRetry: () -> Unit
 ) {
     val gradient = Brush.verticalGradient(
         colors = listOf(
@@ -200,6 +202,13 @@ fun AlarmScreenContent(
                                 micVolume = micVolume,
                                 onSendText = onSendText,
                                 onMicClick = onMicClick
+                            )
+                        }
+                        AlarmState.ERROR -> {
+                            ErrorLayout(
+                                status = statusMessage,
+                                onRetry = onRetry,
+                                onClose = onClose
                             )
                         }
                         else -> {}
@@ -729,5 +738,56 @@ fun QuickReplyChip(
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.9f)
         )
+    }
+}
+
+@Composable
+fun ErrorLayout(
+    status: String,
+    onRetry: () -> Unit,
+    onClose: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.padding(24.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Close,
+            contentDescription = "Error Icon",
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(64.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = status,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White.copy(alpha = 0.8f),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = onClose,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White.copy(alpha = 0.1f)
+                ),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text("Close", color = Color.White)
+            }
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                ),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text("Retry", color = Color.White)
+            }
+        }
     }
 }

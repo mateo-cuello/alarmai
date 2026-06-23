@@ -3,6 +3,10 @@ package com.mateocuello.alarmai.data.repository
 import android.content.Context
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import org.json.JSONArray
 
 data class WorldCupMatch(
     val round: String,
@@ -14,7 +18,123 @@ data class WorldCupMatch(
     val ground: String
 )
 
-class WorldCupRepository {
+class WorldCupRepository @JvmOverloads constructor(
+    private val client: okhttp3.Call.Factory = okhttp3.OkHttpClient()
+) {
+
+    fun fetchAllMatches(context: Context): List<WorldCupMatch> {
+        try {
+            val request = Request.Builder()
+                .url("https://api.fifa.com/api/v3/calendar/matches?idCompetition=17")
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val bodyString = response.body?.string()
+                    if (bodyString != null) {
+                        val parsed = parseFifaMatchesJson(bodyString)
+                        if (parsed.isNotEmpty()) {
+                            return parsed
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // Fallback to local asset
+        return try {
+            val jsonString = context.assets.open("worldcup_2026.json").use { inputStream ->
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    reader.readText()
+                }
+            }
+            parseAllMatches(jsonString)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    fun parseFifaMatchesJson(jsonString: String): List<WorldCupMatch> {
+        val matches = mutableListOf<WorldCupMatch>()
+        try {
+            val root = JSONObject(jsonString)
+            val results = root.optJSONArray("Results") ?: return emptyList()
+            for (i in 0 until results.length()) {
+                val matchObj = results.getJSONObject(i)
+                val matchDay = matchObj.optString("MatchDay", "")
+                val round = if (matchDay.isNotEmpty() && matchDay != "null") {
+                    "Matchday $matchDay"
+                } else {
+                    parseLocalizedArray(matchObj.optJSONArray("StageName")) ?: ""
+                }
+
+                val dateRaw = matchObj.optString("Date", "")
+                val matchDate: String
+                val matchTime: String
+                if (dateRaw.length >= 19) {
+                    matchDate = dateRaw.substring(0, 10)
+                    matchTime = dateRaw.substring(11, 16) + " UTC"
+                } else {
+                    matchDate = dateRaw
+                    matchTime = ""
+                }
+
+                val homeObj = matchObj.optJSONObject("Home")
+                val team1 = if (homeObj != null) {
+                    parseLocalizedArray(homeObj.optJSONArray("TeamName")) ?: ""
+                } else {
+                    ""
+                }
+
+                val awayObj = matchObj.optJSONObject("Away")
+                val team2 = if (awayObj != null) {
+                    parseLocalizedArray(awayObj.optJSONArray("TeamName")) ?: ""
+                } else {
+                    ""
+                }
+
+                val group = parseLocalizedArray(matchObj.optJSONArray("GroupName"))
+
+                val stadiumObj = matchObj.optJSONObject("Stadium")
+                val ground = if (stadiumObj != null) {
+                    parseLocalizedArray(stadiumObj.optJSONArray("CityName"))
+                        ?: parseLocalizedArray(stadiumObj.optJSONArray("City"))
+                        ?: ""
+                } else {
+                    ""
+                }
+
+                matches.add(
+                    WorldCupMatch(
+                        round = round,
+                        date = matchDate,
+                        time = matchTime,
+                        team1 = team1,
+                        team2 = team2,
+                        group = group,
+                        ground = ground
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return matches
+    }
+
+    private fun parseLocalizedArray(array: JSONArray?): String? {
+        if (array == null || array.length() == 0) return null
+        for (i in 0 until array.length()) {
+            val obj = array.getJSONObject(i)
+            val locale = obj.optString("Locale", "")
+            if (locale.startsWith("en", ignoreCase = true)) {
+                return obj.optString("Description")
+            }
+        }
+        return array.getJSONObject(0).optString("Description")
+    }
 
     fun parseMatches(jsonString: String, dateString: String): List<WorldCupMatch> {
         val matches = mutableListOf<WorldCupMatch>()
@@ -105,17 +225,8 @@ class WorldCupRepository {
 
     fun getMatchesForDate(context: Context, dateString: String): List<WorldCupMatch> {
         val normalizedDate = normalizeDateString(dateString)
-        return try {
-            val jsonString = context.assets.open("worldcup_2026.json").use { inputStream ->
-                BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                    reader.readText()
-                }
-            }
-            parseMatches(jsonString, normalizedDate)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
+        val allMatches = fetchAllMatches(context)
+        return allMatches.filter { it.date == normalizedDate }
     }
 
     fun getTodayMatchesSummary(context: Context, dateString: String): String {
@@ -133,21 +244,11 @@ class WorldCupRepository {
         return sb.toString().trim()
     }
 
-    /**
-     * Searches all World Cup matches for a specific team.
-     * Supports common name aliases (e.g., "Estados Unidos" -> "USA").
-     */
     fun getMatchesByTeam(context: Context, teamName: String): String {
         val normalizedTeam = normalizeTeamName(teamName)
         
         return try {
-            val jsonString = context.assets.open("worldcup_2026.json").use { inputStream ->
-                BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                    reader.readText()
-                }
-            }
-            
-            val allMatches = parseAllMatches(jsonString)
+            val allMatches = fetchAllMatches(context)
             val teamMatches = allMatches.filter { match ->
                 match.team1.contains(normalizedTeam, ignoreCase = true) ||
                 match.team2.contains(normalizedTeam, ignoreCase = true)
@@ -170,9 +271,6 @@ class WorldCupRepository {
         }
     }
 
-    /**
-     * Parses ALL matches from the JSON (not filtered by date).
-     */
     private fun parseAllMatches(jsonString: String): List<WorldCupMatch> {
         val matches = mutableListOf<WorldCupMatch>()
         try {
@@ -208,10 +306,6 @@ class WorldCupRepository {
         return matches
     }
 
-    /**
-     * Normalizes team names to match the fixture data.
-     * Handles common aliases and Spanish names.
-     */
     private fun normalizeTeamName(name: String): String {
         val trimmed = name.trim()
         val aliases = mapOf(
@@ -220,7 +314,6 @@ class WorldCupRepository {
             "ee.uu." to "USA",
             "united states" to "USA",
             "america" to "USA",
-            "eeuu" to "USA",
             "brasil" to "Brazil",
             "alemania" to "Germany",
             "francia" to "France",
