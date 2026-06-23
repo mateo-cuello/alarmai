@@ -11,7 +11,6 @@
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
@@ -20,7 +19,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
@@ -55,19 +54,22 @@
             android:showOnLockScreen="true"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
-            android:theme="@style/Theme.AlarmAI.Fullscreen" />
+            android:theme="@style/Theme.AlarmAI.Fullscreen"
+            android:directBootAware="true" />
 
         <!-- Broadcast Receiver for Alarms -->
         <receiver
             android:name=".receiver.AlarmReceiver"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:directBootAware="true" />
 
         <!-- Broadcast Receiver for Pre-Alarm Prefetching -->
         <receiver
             android:name=".receiver.PreAlarmReceiver"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:directBootAware="true" />
 
         <!-- Broadcast Receiver for Boot Recovery -->
         <receiver
@@ -86,7 +88,10 @@
             android:name=".service.AlarmService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:foregroundServiceType="specialUse"
+            android:directBootAware="true">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="alarm" />
+        </service>
 
     </application>
 

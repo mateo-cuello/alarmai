@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.service.AlarmServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:20:29.385Z" hostname="INSPRION16" time="0.236">
+<testsuite name="com.mateocuello.alarmai.service.AlarmServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-06-23T20:01:14.610Z" hostname="INSPRION16" time="0.248">
   <properties/>
-  <testcase name="testOnStartCommand_CreatesNotification" classname="com.mateocuello.alarmai.service.AlarmServiceTest" time="0.236"/>
+  <testcase name="testOnDestroy_StopsAndReleasesMediaPlayer" classname="com.mateocuello.alarmai.service.AlarmServiceTest" time="0.237"/>
+  <testcase name="testOnStartCommand_CreatesNotification" classname="com.mateocuello.alarmai.service.AlarmServiceTest" time="0.004"/>
+  <testcase name="testOnStartCommand_PlaysAlarmSound_ConfiguresMediaPlayer" classname="com.mateocuello.alarmai.service.AlarmServiceTest" time="0.004"/>
+  <testcase name="testOnStartCommand_PlayAlarmSoundThrowsException_LogsError" classname="com.mateocuello.alarmai.service.AlarmServiceTest" time="0.003"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

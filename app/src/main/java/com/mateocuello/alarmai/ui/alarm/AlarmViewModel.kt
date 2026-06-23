@@ -61,6 +61,11 @@ class AlarmViewModel(
 
     init {
         prefetchLocation()
+        voiceManager.onSessionInterrupted = {
+            val isEs = prefs.getLanguage() == "es"
+            _statusMessage.value = if (isEs) "Sesión de voz interrumpida por otra aplicación." else "Voice session interrupted by another application."
+            _uiState.value = AlarmState.ERROR
+        }
     }
 
     private fun prefetchLocation() {

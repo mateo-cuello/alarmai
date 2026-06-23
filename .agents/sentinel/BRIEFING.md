@@ -1,12 +1,12 @@
-# BRIEFING — 2026-06-23T02:51:29Z
+# BRIEFING — 2026-06-23T19:55:26Z
 
 ## Mission
-Fix and harden the STT and TTS conversation loop in AlarmAI Android app for hands-free interaction.
+Apply Android 16 (API 36) compatibility fixes to the AlarmAI Android app.
 
 ## 🔒 My Identity
 - Archetype: sentinel
 - Working directory: C:\Users\usuario\alarmai\.agents\sentinel
-- Orchestrator: d3c5bf3c-457b-4d20-81bb-9ae941d3119d
+- Orchestrator: 10462576-6182-4c65-a6e7-5fa6387890ea
 - Victory Auditor: TBD
 
 ## 🔒 Key Constraints
@@ -14,9 +14,9 @@ Fix and harden the STT and TTS conversation loop in AlarmAI Android app for hand
 - Victory Audit is MANDATORY before reporting completion
 
 ## User Context
-- **Last user request**: Fix and harden the STT and TTS conversation loop.
+- **Last user request**: Apply Android 16 (API 36) compatibility fixes.
 - **Pending clarifications**: none
-- **Delivered results**: [none]
+- **Delivered results**: none
 
 ## Project Status
 - **Phase**: in progress
@@ -27,4 +27,5 @@ Fix and harden the STT and TTS conversation loop in AlarmAI Android app for hand
 - **Retry count**: 0
 
 ## Artifact Index
-- C:\Users\usuario\alarmai\ORIGINAL_REQUEST.md — Verbatim user request record
+- c:\Users\usuario\alarmai\ORIGINAL_REQUEST.md — Verbatim user request record
+- c:\Users\usuario\alarmai\.agents\sentinel\BRIEFING.md — Sentinel persistent working memory

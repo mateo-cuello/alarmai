@@ -744,7 +744,13 @@ private fun triggerTestAlarm(context: Context) {
     val triggerTime = System.currentTimeMillis() + 5000
 
     try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerTime,
+                pendingIntent
+            )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
@@ -771,7 +777,7 @@ private fun triggerTestAlarm(context: Context) {
 }
 
 private fun checkExactAlarmPermission(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.S || Build.VERSION.SDK_INT == Build.VERSION_CODES.S_V2) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (!alarmManager.canScheduleExactAlarms()) {
             Toast.makeText(

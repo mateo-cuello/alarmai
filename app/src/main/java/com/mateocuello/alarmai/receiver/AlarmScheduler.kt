@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import com.mateocuello.alarmai.data.model.Alarm
+import com.mateocuello.alarmai.ui.alarm.AlarmActivity
 import java.util.Calendar
 
 class AlarmScheduler(private val context: Context) {
@@ -33,28 +34,20 @@ class AlarmScheduler(private val context: Context) {
 
         // Schedule Main Alarm
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        calendar.timeInMillis,
-                        pendingIntent
-                    )
-                } else {
-                    // Fallback if permission is missing
-                    alarmManager.setAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        calendar.timeInMillis,
-                        pendingIntent
-                    )
-                }
-            } else {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
+            val showIntent = Intent(context, AlarmActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
+            val showPendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                showIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(
+                calendar.timeInMillis,
+                showPendingIntent
+            )
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
             Log.d("AlarmScheduler", "Alarm scheduled for ${calendar.time}")
         } catch (e: Exception) {
             Log.e("AlarmScheduler", "Failed to schedule alarm: ${e.localizedMessage}")
@@ -73,7 +66,13 @@ class AlarmScheduler(private val context: Context) {
 
         if (preAlarmTime > now) {
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        preAlarmTime,
+                        preAlarmPendingIntent
+                    )
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     if (alarmManager.canScheduleExactAlarms()) {
                         alarmManager.setExactAndAllowWhileIdle(
                             AlarmManager.RTC_WAKEUP,

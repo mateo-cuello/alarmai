@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:20:32.661Z" hostname="INSPRION16" time="0.022">
+<testsuite name="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:57:38.321Z" hostname="INSPRION16" time="0.022">
   <properties/>
   <testcase name="testParseMatches_noMatchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.002"/>
-  <testcase name="testParseMatches_realFile" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.007"/>
-  <testcase name="testParseMatches_matchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.002"/>
+  <testcase name="testParseMatches_realFile" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.006"/>
+  <testcase name="testParseMatches_matchesFound" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.001"/>
   <testcase name="testFetchAllMatches_successfulNetworkCall" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.008"/>
-  <testcase name="testFetchAllMatches_networkFailure_fallsBackToAsset" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.003"/>
+  <testcase name="testFetchAllMatches_networkFailure_fallsBackToAsset" classname="com.mateocuello.alarmai.data.repository.WorldCupRepositoryTest" time="0.005"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[java.io.IOException: Network error
 	at com.mateocuello.alarmai.data.repository.WorldCupRepository.fetchAllMatches(WorldCupRepository.kt:30)

@@ -7,6 +7,7 @@ import android.util.Log
 import com.mateocuello.alarmai.data.local.PreferencesManager
 import com.mateocuello.alarmai.data.model.Alarm
 import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.mockito.MockedConstruction
@@ -45,9 +46,48 @@ class AlarmReceiverTest {
     }
 
     @Test
-    fun testOnReceive_AlarmActive() {
+    fun testOnReceive_AlarmActive_NonRecurring() {
+        // Since mockAlarm has daysOfWeek = emptySet(), it should update isActive to false
         val receiver = AlarmReceiver()
         receiver.onReceive(context, mock())
+
+        // Verify preferences saved the updated alarm with isActive = false
+        val prefsMocks = prefsConstruction.constructed()
+        assertTrue(prefsMocks.isNotEmpty())
+        val prefs = prefsMocks[0]
+        verify(prefs).saveAlarm(eq(mockAlarm.copy(isActive = false)))
+
+        // Verify service was started
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            verify(context).startForegroundService(any())
+        } else {
+            verify(context).startService(any())
+        }
+    }
+
+    @Test
+    fun testOnReceive_AlarmActive_Recurring() {
+        // Recreate PreferencesManager construction to return a recurring alarm
+        prefsConstruction.close()
+        val recurringAlarm = mockAlarm.copy(daysOfWeek = setOf(2)) // Monday is usually 2 (Calendar.MONDAY)
+        prefsConstruction = Mockito.mockConstruction(PreferencesManager::class.java) { mockPrefs, _ ->
+            whenever(mockPrefs.getAlarm()).thenReturn(recurringAlarm)
+        }
+
+        val receiver = AlarmReceiver()
+        receiver.onReceive(context, mock())
+
+        // Verify scheduler is invoked with fromReceiver = true
+        val schedulerMocks = schedulerConstruction.constructed()
+        assertTrue(schedulerMocks.isNotEmpty())
+        val scheduler = schedulerMocks[0]
+        verify(scheduler).schedule(eq(recurringAlarm), eq(true))
+
+        // Verify preferences did NOT save the inactive alarm because it's recurring
+        val prefsMocks = prefsConstruction.constructed()
+        assertTrue(prefsMocks.isNotEmpty())
+        val prefs = prefsMocks[0]
+        verify(prefs, never()).saveAlarm(any())
 
         // Verify service was started
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

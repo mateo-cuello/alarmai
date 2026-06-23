@@ -71,24 +71,14 @@ class AlarmService : Service() {
         val notification = notificationBuilder.build()
 
         // Start Foreground
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
                 NOTIFICATION_ID, 
                 notification, 
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             )
         } else {
             startForeground(NOTIFICATION_ID, notification)
-        }
-
-        // Fallback: If we can't use full screen intent, launch AlarmActivity directly
-        if (!canUseFullScreen) {
-            Log.d("AlarmService", "Full screen intent not allowed. Launching AlarmActivity directly.")
-            try {
-                startActivity(fullScreenIntent)
-            } catch (e: Exception) {
-                Log.e("AlarmService", "Failed to start AlarmActivity directly: ${e.localizedMessage}")
-            }
         }
 
         // Start playing alarm ringtone

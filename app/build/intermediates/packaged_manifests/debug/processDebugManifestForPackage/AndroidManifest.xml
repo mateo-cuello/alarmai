@@ -17,7 +17,6 @@
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
@@ -26,7 +25,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -65,6 +64,7 @@
         <!-- Alarm Trigger Activity (Full-Screen Intent) -->
         <activity
             android:name="com.mateocuello.alarmai.ui.alarm.AlarmActivity"
+            android:directBootAware="true"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleInstance"
@@ -76,12 +76,14 @@
         <!-- Broadcast Receiver for Alarms -->
         <receiver
             android:name="com.mateocuello.alarmai.receiver.AlarmReceiver"
+            android:directBootAware="true"
             android:enabled="true"
             android:exported="false" />
 
         <!-- Broadcast Receiver for Pre-Alarm Prefetching -->
         <receiver
             android:name="com.mateocuello.alarmai.receiver.PreAlarmReceiver"
+            android:directBootAware="true"
             android:enabled="true"
             android:exported="false" />
 
@@ -100,9 +102,14 @@
         <!-- Foreground Service for Playing Ringtone -->
         <service
             android:name="com.mateocuello.alarmai.service.AlarmService"
+            android:directBootAware="true"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:foregroundServiceType="specialUse" >
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="alarm" />
+        </service>
 
         <provider
             android:name="androidx.startup.InitializationProvider"

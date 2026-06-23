@@ -28,7 +28,7 @@ class IntegrationTest {
     private val prefs: PreferencesManager = mock()
     private val worldCupRepository: WorldCupRepository = mock()
 
-    private val testApiKey = "AQ.Ab8RN6Zr-hF_y-c5q4M6z8pxKe6ohQ7g-NO1cI7EcPsVMMXRrNQ" // Test placeholder to run
+
 
     @Before
     fun setUp() {

@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:20:29.313Z" hostname="INSPRION16" time="0.061">
+<testsuite name="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-06-23T20:01:14.467Z" hostname="INSPRION16" time="0.134">
   <properties/>
-  <testcase name="testSchedule_InactiveAlarm_Cancels" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.05"/>
-  <testcase name="testCancel" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.001"/>
-  <testcase name="testSchedule_ActiveAlarm" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.01"/>
+  <testcase name="testSchedule_AlarmManagerThrowsException_LogsError" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.07"/>
+  <testcase name="testSchedule_ActiveAlarm_PreAlarmInFuture_SchedulesPreAlarm" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.001"/>
+  <testcase name="testSchedule_InactiveAlarm_Cancels" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.002"/>
+  <testcase name="testCancel" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.002"/>
+  <testcase name="testSchedule_ActiveAlarm" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.001"/>
+  <testcase name="testSchedule_ActiveAlarm_PreAlarmInPast_CallsStartPrefetch" classname="com.mateocuello.alarmai.receiver.AlarmSchedulerTest" time="0.058"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

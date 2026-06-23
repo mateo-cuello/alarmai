@@ -15,6 +15,10 @@ import java.time.format.DateTimeFormatter
 class CalendarRepository(private val context: Context) {
 
     suspend fun getTodayEvents(): String = withContext(Dispatchers.IO) {
+        if (!androidx.core.os.UserManagerCompat.isUserUnlocked(context)) {
+            return@withContext "Your calendar is unavailable because the device is locked under Direct Boot."
+        }
+
         val hasPermission = context.checkSelfPermission(android.Manifest.permission.READ_CALENDAR) == android.content.pm.PackageManager.PERMISSION_GRANTED
         if (!hasPermission) {
             return@withContext "Calendar access permission is not granted. Prompt the user to grant permission."

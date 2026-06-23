@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.IntegrationTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-06-23T19:20:30.632Z" hostname="INSPRION16" time="1.177">
+<testsuite name="com.mateocuello.alarmai.IntegrationTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-06-23T19:57:37.364Z" hostname="INSPRION16" time="0.118">
   <properties/>
-  <testcase name="testRealGeminiApiCall" classname="com.mateocuello.alarmai.IntegrationTest" time="1.177">
+  <testcase name="testRealGeminiApiCall" classname="com.mateocuello.alarmai.IntegrationTest" time="0.118">
     <skipped/>
   </testcase>
   <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (C:\Users\usuario\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.14.12\be4984cb6fd1ef1d11f218a648889dfda44b8a15\byte-buddy-agent-1.14.12.jar)
-WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
-WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
-WARNING: Dynamic loading of agents will be disallowed by default in a future release
-]]></system-err>
+  <system-err><![CDATA[]]></system-err>
 </testsuite>

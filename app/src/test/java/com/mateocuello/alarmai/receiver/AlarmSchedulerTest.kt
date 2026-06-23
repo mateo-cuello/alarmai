@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.mateocuello.alarmai.data.model.Alarm
 import org.junit.After
 import org.junit.Before
@@ -59,8 +61,9 @@ class AlarmSchedulerTest {
         val scheduler = AlarmScheduler(context)
         scheduler.schedule(alarm)
 
-        // Verify exact alarms set
-        verify(alarmManager, atLeastOnce()).setExactAndAllowWhileIdle(any(), any(), any())
+        // Verify main alarm set via setAlarmClock, pre-alarm via setExactAndAllowWhileIdle
+        verify(alarmManager).setAlarmClock(any(), any())
+        verify(alarmManager).setExactAndAllowWhileIdle(any(), any(), any())
     }
 
     @Test
@@ -88,6 +91,69 @@ class AlarmSchedulerTest {
         pendingIntentMock.verify {
             PendingIntent.getBroadcast(eq(context), eq(1001), any(), eq(PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE))
             PendingIntent.getBroadcast(eq(context), eq(1002), any(), eq(PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE))
+        }
+    }
+
+    @Test
+    fun testSchedule_ActiveAlarm_PreAlarmInPast_CallsStartPrefetch() {
+        val cal = Calendar.getInstance().apply {
+            add(Calendar.MINUTE, 1)
+        }
+        val alarm = Alarm(
+            hour = cal.get(Calendar.HOUR_OF_DAY),
+            minute = cal.get(Calendar.MINUTE),
+            isActive = true
+        )
+
+        val workManagerMock = mock<WorkManager>()
+        Mockito.mockStatic(WorkManager::class.java).use { workManagerStatic ->
+            workManagerStatic.`when`<WorkManager> {
+                WorkManager.getInstance(any())
+            }.thenReturn(workManagerMock)
+
+            val scheduler = AlarmScheduler(context)
+            scheduler.schedule(alarm)
+
+            // Verify main alarm set via setAlarmClock, pre-alarm not scheduled via setExactAndAllowWhileIdle
+            verify(alarmManager).setAlarmClock(any(), any())
+            verify(alarmManager, never()).setExactAndAllowWhileIdle(any(), any(), any())
+            verify(workManagerMock).enqueue(any<WorkRequest>())
+        }
+    }
+
+    @Test
+    fun testSchedule_ActiveAlarm_PreAlarmInFuture_SchedulesPreAlarm() {
+        val cal = Calendar.getInstance().apply {
+            add(Calendar.MINUTE, 3)
+        }
+        val alarm = Alarm(
+            hour = cal.get(Calendar.HOUR_OF_DAY),
+            minute = cal.get(Calendar.MINUTE),
+            isActive = true
+        )
+
+        val scheduler = AlarmScheduler(context)
+        scheduler.schedule(alarm)
+
+        // Verify main alarm scheduled with setAlarmClock, pre-alarm with setExactAndAllowWhileIdle
+        verify(alarmManager).setAlarmClock(any(), any())
+        verify(alarmManager).setExactAndAllowWhileIdle(any(), any(), any())
+    }
+
+    @Test
+    fun testSchedule_AlarmManagerThrowsException_LogsError() {
+        val alarm = Alarm(
+            hour = 8,
+            minute = 0,
+            isActive = true
+        )
+        whenever(alarmManager.setAlarmClock(any(), any())).thenThrow(RuntimeException("Mock AlarmManager Exception"))
+
+        val scheduler = AlarmScheduler(context)
+        scheduler.schedule(alarm)
+
+        logMock.verify {
+            Log.e(eq("AlarmScheduler"), eq("Failed to schedule alarm: Mock AlarmManager Exception"))
         }
     }
 }

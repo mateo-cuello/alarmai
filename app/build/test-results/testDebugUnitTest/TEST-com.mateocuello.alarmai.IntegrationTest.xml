@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.IntegrationTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-06-23T19:20:27.092Z" hostname="INSPRION16" time="1.258">
+<testsuite name="com.mateocuello.alarmai.IntegrationTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-06-23T20:01:12.419Z" hostname="INSPRION16" time="1.146">
   <properties/>
-  <testcase name="testRealGeminiApiCall" classname="com.mateocuello.alarmai.IntegrationTest" time="1.258">
+  <testcase name="testRealGeminiApiCall" classname="com.mateocuello.alarmai.IntegrationTest" time="1.146">
     <skipped/>
   </testcase>
   <system-out><![CDATA[]]></system-out>

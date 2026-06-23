@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.receiver.AlarmReceiverTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:20:32.685Z" hostname="INSPRION16" time="0.028">
+<testsuite name="com.mateocuello.alarmai.receiver.AlarmReceiverTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:57:38.345Z" hostname="INSPRION16" time="0.024">
   <properties/>
-  <testcase name="testOnReceive_AlarmActive" classname="com.mateocuello.alarmai.receiver.AlarmReceiverTest" time="0.027"/>
+  <testcase name="testOnReceive_AlarmActive_Recurring" classname="com.mateocuello.alarmai.receiver.AlarmReceiverTest" time="0.023"/>
   <testcase name="testOnReceive_AlarmInactive_DoesNotStartService" classname="com.mateocuello.alarmai.receiver.AlarmReceiverTest" time="0.001"/>
+  <testcase name="testOnReceive_AlarmActive_NonRecurring" classname="com.mateocuello.alarmai.receiver.AlarmReceiverTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

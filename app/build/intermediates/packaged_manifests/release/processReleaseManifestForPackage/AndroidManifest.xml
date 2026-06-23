@@ -64,6 +64,7 @@
         <!-- Alarm Trigger Activity (Full-Screen Intent) -->
         <activity
             android:name="com.mateocuello.alarmai.ui.alarm.AlarmActivity"
+            android:directBootAware="true"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleInstance"
@@ -75,12 +76,14 @@
         <!-- Broadcast Receiver for Alarms -->
         <receiver
             android:name="com.mateocuello.alarmai.receiver.AlarmReceiver"
+            android:directBootAware="true"
             android:enabled="true"
             android:exported="false" />
 
         <!-- Broadcast Receiver for Pre-Alarm Prefetching -->
         <receiver
             android:name="com.mateocuello.alarmai.receiver.PreAlarmReceiver"
+            android:directBootAware="true"
             android:enabled="true"
             android:exported="false" />
 
@@ -99,6 +102,7 @@
         <!-- Foreground Service for Playing Ringtone -->
         <service
             android:name="com.mateocuello.alarmai.service.AlarmService"
+            android:directBootAware="true"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />

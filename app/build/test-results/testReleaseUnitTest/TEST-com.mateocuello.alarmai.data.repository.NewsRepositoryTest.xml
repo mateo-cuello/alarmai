@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.data.repository.NewsRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:20:31.936Z" hostname="INSPRION16" time="0.157">
+<testsuite name="com.mateocuello.alarmai.data.repository.NewsRepositoryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:57:37.583Z" hostname="INSPRION16" time="0.178">
   <properties/>
-  <testcase name="testGetNews_HttpFailure_FallbackToMock" classname="com.mateocuello.alarmai.data.repository.NewsRepositoryTest" time="0.148"/>
+  <testcase name="testGetNews_HttpFailure_FallbackToMock" classname="com.mateocuello.alarmai.data.repository.NewsRepositoryTest" time="0.169"/>
   <testcase name="testSearchNewsByQuery_Success" classname="com.mateocuello.alarmai.data.repository.NewsRepositoryTest" time="0.005"/>
   <testcase name="testGetNews_Success" classname="com.mateocuello.alarmai.data.repository.NewsRepositoryTest" time="0.004"/>
   <system-out><![CDATA[]]></system-out>

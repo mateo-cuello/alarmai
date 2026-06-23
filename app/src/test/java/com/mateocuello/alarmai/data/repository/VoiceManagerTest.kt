@@ -117,6 +117,7 @@ class VoiceManagerTest {
         audioFocusRequestBuilderConstruction.close()
         intentConstruction.close()
         bundleConstruction.close()
+        VoiceManager.sdkVersionProvider = { android.os.Build.VERSION.SDK_INT }
     }
 
     @Test
@@ -283,7 +284,6 @@ class VoiceManagerTest {
         listener.onResults(bundle)
 
         assertEquals("hello user", resultText)
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_MUSIC), eq(AudioManager.ADJUST_UNMUTE), anyInt())
     }
 
     @Test
@@ -311,7 +311,6 @@ class VoiceManagerTest {
         listener.onError(SpeechRecognizer.ERROR_NO_MATCH)
 
         assertEquals("No speech match found", errorMsg)
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_MUSIC), eq(AudioManager.ADJUST_UNMUTE), anyInt())
     }
 
     @Test
@@ -334,35 +333,6 @@ class VoiceManagerTest {
         voiceManager.stopListening()
 
         verify(mockSpeechRecognizer).stopListening()
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_MUSIC), eq(AudioManager.ADJUST_UNMUTE), anyInt())
-    }
-
-    @Test
-    fun testMuteBeepAndUnmuteBeep() {
-        srMockStatic.`when`<Boolean> { SpeechRecognizer.isRecognitionAvailable(any()) }.thenReturn(true)
-
-        val voiceManager = VoiceManager(
-            context = context,
-            prefs = prefs,
-            ttsFactory = { _, _ -> mockTts },
-            speechRecognizerFactory = { mockSpeechRecognizer }
-        )
-
-        voiceManager.startListening(
-            onResult = {},
-            onError = {},
-            onRmsChanged = {}
-        )
-
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_MUSIC), eq(AudioManager.ADJUST_MUTE), eq(0))
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_SYSTEM), eq(AudioManager.ADJUST_MUTE), eq(0))
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_NOTIFICATION), eq(AudioManager.ADJUST_MUTE), eq(0))
-
-        voiceManager.stopListening()
-
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_MUSIC), eq(AudioManager.ADJUST_UNMUTE), eq(0))
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_SYSTEM), eq(AudioManager.ADJUST_UNMUTE), eq(0))
-        verify(audioManager).adjustStreamVolume(eq(AudioManager.STREAM_NOTIFICATION), eq(AudioManager.ADJUST_UNMUTE), eq(0))
     }
 
     @Test
@@ -386,5 +356,114 @@ class VoiceManagerTest {
         verify(mockTts).shutdown()
         verify(mockSpeechRecognizer).destroy()
         verify(audioManager, Mockito.atLeastOnce()).abandonAudioFocusRequest(any())
+    }
+
+    @Test
+    fun testAudioFocusLoss_StopsSpeakingAndListening() {
+        srMockStatic.`when`<Boolean> { SpeechRecognizer.isRecognitionAvailable(any()) }.thenReturn(true)
+
+        // Make ttsFactory trigger text-to-speech success so it sets isTtsInitialized = true
+        var capturedInitListener: TextToSpeech.OnInitListener? = null
+        val voiceManager = VoiceManager(
+            context = context,
+            prefs = prefs,
+            ttsFactory = { _, listener ->
+                capturedInitListener = listener
+                mockTts
+            },
+            speechRecognizerFactory = { mockSpeechRecognizer }
+        )
+        capturedInitListener?.onInit(TextToSpeech.SUCCESS)
+
+        var interruptedCalled = false
+        voiceManager.onSessionInterrupted = {
+            interruptedCalled = true
+        }
+
+        // Start listening to initialize speechRecognizer and focusRequest
+        voiceManager.startListening(
+            onResult = {},
+            onError = {},
+            onRmsChanged = {}
+        )
+
+        // Capture focus change listener after focusRequest is accessed/created
+        val focusBuilderMocks = audioFocusRequestBuilderConstruction.constructed()
+        assertTrue(focusBuilderMocks.isNotEmpty())
+        val focusBuilder = focusBuilderMocks[0]
+
+        val listenerCaptor = ArgumentCaptor.forClass(AudioManager.OnAudioFocusChangeListener::class.java)
+        verify(focusBuilder).setOnAudioFocusChangeListener(listenerCaptor.capture())
+        val focusListener = listenerCaptor.value
+
+        // Simulate focus loss
+        focusListener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
+
+        // Verify TTS stop, SpeechRecognizer stop, and interruption callback
+        assertTrue(interruptedCalled)
+        verify(mockTts).stop()
+        verify(mockSpeechRecognizer).stopListening()
+    }
+
+    @Test
+    fun testOnDeviceRecognizerSelectedOnApi31PlusWhenAvailable() {
+        VoiceManager.sdkVersionProvider = { 31 }
+        srMockStatic.`when`<Boolean> { SpeechRecognizer.isRecognitionAvailable(any()) }.thenReturn(true)
+        srMockStatic.`when`<Boolean> { SpeechRecognizer.isOnDeviceRecognitionAvailable(any()) }.thenReturn(true)
+        
+        val mockOnDeviceRecognizer = mock<SpeechRecognizer>()
+        srMockStatic.`when`<SpeechRecognizer> { SpeechRecognizer.createOnDeviceSpeechRecognizer(any()) }.thenReturn(mockOnDeviceRecognizer)
+        
+        val voiceManager = VoiceManager(
+            context = context,
+            prefs = prefs,
+            ttsFactory = { _, _ -> mockTts }
+        )
+        
+        voiceManager.startSession()
+        
+        srMockStatic.verify({ SpeechRecognizer.createOnDeviceSpeechRecognizer(any()) }, Mockito.times(1))
+        srMockStatic.verify({ SpeechRecognizer.createSpeechRecognizer(any()) }, Mockito.never())
+    }
+
+    @Test
+    fun testFallbackToStandardRecognizerOnApi31PlusWhenOnDeviceUnavailable() {
+        VoiceManager.sdkVersionProvider = { 31 }
+        srMockStatic.`when`<Boolean> { SpeechRecognizer.isRecognitionAvailable(any()) }.thenReturn(true)
+        srMockStatic.`when`<Boolean> { SpeechRecognizer.isOnDeviceRecognitionAvailable(any()) }.thenReturn(false)
+        
+        val mockStandardRecognizer = mock<SpeechRecognizer>()
+        srMockStatic.`when`<SpeechRecognizer> { SpeechRecognizer.createSpeechRecognizer(any()) }.thenReturn(mockStandardRecognizer)
+        
+        val voiceManager = VoiceManager(
+            context = context,
+            prefs = prefs,
+            ttsFactory = { _, _ -> mockTts }
+        )
+        
+        voiceManager.startSession()
+        
+        srMockStatic.verify({ SpeechRecognizer.createSpeechRecognizer(any()) }, Mockito.times(1))
+        srMockStatic.verify({ SpeechRecognizer.createOnDeviceSpeechRecognizer(any()) }, Mockito.never())
+    }
+
+    @Test
+    fun testFallbackToStandardRecognizerOnOlderApis() {
+        VoiceManager.sdkVersionProvider = { 30 }
+        srMockStatic.`when`<Boolean> { SpeechRecognizer.isRecognitionAvailable(any()) }.thenReturn(true)
+        
+        val mockStandardRecognizer = mock<SpeechRecognizer>()
+        srMockStatic.`when`<SpeechRecognizer> { SpeechRecognizer.createSpeechRecognizer(any()) }.thenReturn(mockStandardRecognizer)
+        
+        val voiceManager = VoiceManager(
+            context = context,
+            prefs = prefs,
+            ttsFactory = { _, _ -> mockTts }
+        )
+        
+        voiceManager.startSession()
+        
+        srMockStatic.verify({ SpeechRecognizer.createSpeechRecognizer(any()) }, Mockito.times(1))
+        srMockStatic.verify({ SpeechRecognizer.createOnDeviceSpeechRecognizer(any()) }, Mockito.never())
     }
 }
