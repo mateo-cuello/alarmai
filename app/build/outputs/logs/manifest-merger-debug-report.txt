@@ -101,9 +101,7 @@ ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:13:5-80
 	android:name
 		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:13:22-77
 uses-permission#android.permission.SCHEDULE_EXACT_ALARM
-ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:5-106
-	android:maxSdkVersion
-		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:77-103
+ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:5-79
 	android:name
 		ADDED from C:\Users\usuario\alarmai\app\src\main\AndroidManifest.xml:14:22-76
 uses-permission#android.permission.USE_EXACT_ALARM

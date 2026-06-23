@@ -47,16 +47,28 @@ class AlarmService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val canUseFullScreen = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            notificationManager.canUseFullScreenIntent()
+        } else {
+            true
+        }
+
         // Build notification
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("AlarmAI is ringing!")
             .setContentText("Tap to open assistant")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setContentIntent(fullScreenPendingIntent)
             .setOngoing(true)
-            .build()
+
+        if (canUseFullScreen) {
+            notificationBuilder.setFullScreenIntent(fullScreenPendingIntent, true)
+        }
+
+        val notification = notificationBuilder.build()
 
         // Start Foreground
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -67,6 +79,16 @@ class AlarmService : Service() {
             )
         } else {
             startForeground(NOTIFICATION_ID, notification)
+        }
+
+        // Fallback: If we can't use full screen intent, launch AlarmActivity directly
+        if (!canUseFullScreen) {
+            Log.d("AlarmService", "Full screen intent not allowed. Launching AlarmActivity directly.")
+            try {
+                startActivity(fullScreenIntent)
+            } catch (e: Exception) {
+                Log.e("AlarmService", "Failed to start AlarmActivity directly: ${e.localizedMessage}")
+            }
         }
 
         // Start playing alarm ringtone

@@ -22,13 +22,13 @@ class AlarmReceiver : BroadcastReceiver() {
                 val updated = alarm.copy(isActive = false)
                 prefs.saveAlarm(updated)
             }
-        }
-        
-        val serviceIntent = Intent(context, AlarmService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+
+            val serviceIntent = Intent(context, AlarmService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
         }
     }
 }

@@ -20,7 +20,7 @@
 <tr>
 <td>
 <div class="infoBox" id="tests">
-<div class="counter">62</div>
+<div class="counter">72</div>
 <p>tests</p>
 </div>
 </td>
@@ -32,13 +32,13 @@
 </td>
 <td>
 <div class="infoBox" id="ignored">
-<div class="counter">0</div>
+<div class="counter">1</div>
 <p>ignored</p>
 </div>
 </td>
 <td>
 <div class="infoBox" id="duration">
-<div class="counter">2.160s</div>
+<div class="counter">2.734s</div>
 <p>duration</p>
 </div>
 </td>
@@ -47,7 +47,7 @@
 </div>
 </td>
 <td>
-<div class="infoBox success" id="successRate">
+<div class="infoBox skipped" id="successRate">
 <div class="percent">100%</div>
 <p>successful</p>
 </div>
@@ -58,12 +58,24 @@
 <div class="tab-container">
 <ul class="tabLinks">
 <li>
+<a href="#">Ignored tests</a>
+</li>
+<li>
 <a href="#">Packages</a>
 </li>
 <li>
 <a href="#">Classes</a>
 </li>
 </ul>
+<div class="tab">
+<h2>Ignored tests</h2>
+<ul class="linkList">
+<li>
+<a href="classes/com.mateocuello.alarmai.IntegrationTest.html">IntegrationTest</a>.
+<a href="classes/com.mateocuello.alarmai.IntegrationTest.html#testRealGeminiApiCall">testRealGeminiApiCall</a>
+</li>
+</ul>
+</div>
 <div class="tab">
 <h2>Packages</h2>
 <table>
@@ -79,33 +91,53 @@
 </thead>
 <tbody>
 <tr>
+<td class="skipped">
+<a href="packages/com.mateocuello.alarmai.html">com.mateocuello.alarmai</a>
+</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1.258s</td>
+<td class="skipped">-</td>
+</tr>
+<tr>
 <td class="success">
 <a href="packages/com.mateocuello.alarmai.data.local.html">com.mateocuello.alarmai.data.local</a>
 </td>
 <td>6</td>
 <td>0</td>
 <td>0</td>
-<td>0.147s</td>
+<td>0.081s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
 <td class="success">
 <a href="packages/com.mateocuello.alarmai.data.repository.html">com.mateocuello.alarmai.data.repository</a>
 </td>
-<td>34</td>
+<td>37</td>
 <td>0</td>
 <td>0</td>
-<td>0.674s</td>
+<td>0.822s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
 <td class="success">
 <a href="packages/com.mateocuello.alarmai.receiver.html">com.mateocuello.alarmai.receiver</a>
 </td>
-<td>9</td>
+<td>14</td>
 <td>0</td>
 <td>0</td>
-<td>0.003s</td>
+<td>0.089s</td>
+<td class="success">100%</td>
+</tr>
+<tr>
+<td class="success">
+<a href="packages/com.mateocuello.alarmai.service.html">com.mateocuello.alarmai.service</a>
+</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0.236s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -115,7 +147,7 @@
 <td>13</td>
 <td>0</td>
 <td>0</td>
-<td>1.336s</td>
+<td>0.248s</td>
 <td class="success">100%</td>
 </tr>
 </tbody>
@@ -136,13 +168,23 @@
 </thead>
 <tbody>
 <tr>
+<td class="skipped">
+<a href="classes/com.mateocuello.alarmai.IntegrationTest.html">com.mateocuello.alarmai.IntegrationTest</a>
+</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1.258s</td>
+<td class="skipped">-</td>
+</tr>
+<tr>
 <td class="success">
 <a href="classes/com.mateocuello.alarmai.data.local.PreferencesManagerTest.html">com.mateocuello.alarmai.data.local.PreferencesManagerTest</a>
 </td>
 <td>6</td>
 <td>0</td>
 <td>0</td>
-<td>0.147s</td>
+<td>0.081s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -152,7 +194,17 @@
 <td>7</td>
 <td>0</td>
 <td>0</td>
-<td>0.049s</td>
+<td>0.033s</td>
+<td class="success">100%</td>
+</tr>
+<tr>
+<td class="success">
+<a href="classes/com.mateocuello.alarmai.data.repository.NewsRepositoryTest.html">com.mateocuello.alarmai.data.repository.NewsRepositoryTest</a>
+</td>
+<td>3</td>
+<td>0</td>
+<td>0</td>
+<td>0.196s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -162,7 +214,7 @@
 <td>11</td>
 <td>0</td>
 <td>0</td>
-<td>0.338s</td>
+<td>0.407s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -172,7 +224,7 @@
 <td>11</td>
 <td>0</td>
 <td>0</td>
-<td>0.164s</td>
+<td>0.149s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -182,7 +234,27 @@
 <td>5</td>
 <td>0</td>
 <td>0</td>
-<td>0.123s</td>
+<td>0.037s</td>
+<td class="success">100%</td>
+</tr>
+<tr>
+<td class="success">
+<a href="classes/com.mateocuello.alarmai.receiver.AlarmReceiverTest.html">com.mateocuello.alarmai.receiver.AlarmReceiverTest</a>
+</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>0.028s</td>
+<td class="success">100%</td>
+</tr>
+<tr>
+<td class="success">
+<a href="classes/com.mateocuello.alarmai.receiver.AlarmSchedulerTest.html">com.mateocuello.alarmai.receiver.AlarmSchedulerTest</a>
+</td>
+<td>3</td>
+<td>0</td>
+<td>0</td>
+<td>0.061s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -192,7 +264,17 @@
 <td>9</td>
 <td>0</td>
 <td>0</td>
-<td>0.003s</td>
+<td>0s</td>
+<td class="success">100%</td>
+</tr>
+<tr>
+<td class="success">
+<a href="classes/com.mateocuello.alarmai.service.AlarmServiceTest.html">com.mateocuello.alarmai.service.AlarmServiceTest</a>
+</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0.236s</td>
 <td class="success">100%</td>
 </tr>
 <tr>
@@ -202,7 +284,7 @@
 <td>13</td>
 <td>0</td>
 <td>0</td>
-<td>1.336s</td>
+<td>0.248s</td>
 <td class="success">100%</td>
 </tr>
 </tbody>
@@ -216,7 +298,7 @@
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 8.13</a> at 23 jun 2026 00:07:55</p>
+<a href="https://www.gradle.org">Gradle 8.13</a> at 23 jun 2026 16:20:29</p>
 </div>
 </div>
 </body>

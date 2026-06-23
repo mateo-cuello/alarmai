@@ -81,7 +81,7 @@ class NewsRepository {
     /**
      * Fetches headlines from Google News RSS feed.
      */
-    private fun fetchRssHeadlines(query: String, language: String, maxResults: Int): String {
+    internal fun fetchRssHeadlines(query: String, language: String, maxResults: Int): String {
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
 
         val (hl, gl, ceid) = when (language) {

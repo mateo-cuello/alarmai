@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-06-23T03:07:54.647Z" hostname="INSPRION16" time="0.003">
+<testsuite name="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:20:29.376Z" hostname="INSPRION16" time="0.002">
   <properties/>
-  <testcase name="testWeekendsOnlyAlarm_SaturdayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
-  <testcase name="testFromReceiverRescheduling" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
+  <testcase name="testWeekendsOnlyAlarm_SaturdayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
+  <testcase name="testFromReceiverRescheduling" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
   <testcase name="testSingleShotAlarm_BeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
   <testcase name="testWeekendsOnlyAlarm_FridayBeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
-  <testcase name="testWeekendsOnlyAlarm_SaturdayBeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.001"/>
+  <testcase name="testWeekendsOnlyAlarm_SaturdayBeforeScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
   <testcase name="testWeekdaysOnlyAlarm_FridayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
   <testcase name="testWeekendsOnlyAlarm_SundayAfterScheduledTime" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>
   <testcase name="testWeekdaysOnlyAlarm_Sunday" classname="com.mateocuello.alarmai.receiver.AlarmTimeCalculatorTest" time="0.0"/>

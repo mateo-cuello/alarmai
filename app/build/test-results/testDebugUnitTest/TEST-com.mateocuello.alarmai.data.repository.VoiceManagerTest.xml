@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.data.repository.VoiceManagerTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-06-23T03:07:54.012Z" hostname="INSPRION16" time="0.34">
+<testsuite name="com.mateocuello.alarmai.data.repository.VoiceManagerTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-06-23T19:20:28.680Z" hostname="INSPRION16" time="0.409">
   <properties/>
-  <testcase name="testStopListening" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.283"/>
-  <testcase name="testSpeakAndCallbackExecutionFlow" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.01"/>
-  <testcase name="testStartListeningCreationAndInteraction" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.006"/>
-  <testcase name="testTtsInitializationSuccess" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.003"/>
+  <testcase name="testStopListening" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.344"/>
+  <testcase name="testSpeakAndCallbackExecutionFlow" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.009"/>
+  <testcase name="testStartListeningCreationAndInteraction" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.009"/>
+  <testcase name="testTtsInitializationSuccess" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.004"/>
   <testcase name="testSpeechRecognizerOnError" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.007"/>
-  <testcase name="testMuteBeepAndUnmuteBeep" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.007"/>
-  <testcase name="testShutdown" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.006"/>
+  <testcase name="testMuteBeepAndUnmuteBeep" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.01"/>
+  <testcase name="testShutdown" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.008"/>
   <testcase name="testTtsInitializationFailure" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.003"/>
   <testcase name="testStartListeningCheckAvailability" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.004"/>
-  <testcase name="testSpeechRecognizerOnResults" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.007"/>
-  <testcase name="testStopSpeaking" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.002"/>
+  <testcase name="testSpeechRecognizerOnResults" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.006"/>
+  <testcase name="testStopSpeaking" classname="com.mateocuello.alarmai.data.repository.VoiceManagerTest" time="0.003"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
