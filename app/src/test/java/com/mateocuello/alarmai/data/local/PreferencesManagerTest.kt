@@ -2,6 +2,7 @@ package com.mateocuello.alarmai.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.mateocuello.alarmai.BuildConfig
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -79,5 +80,29 @@ class PreferencesManagerTest {
         preferencesManager.saveTonePreference("formal, concise")
         verify(editor).putString(eq("assistant_tone_preference"), eq("formal, concise"))
         verify(editor).apply()
+    }
+
+    @Test
+    fun testGetGeminiKey_returnsSavedWhenNotEmpty() {
+        `when`(sharedPreferences.getString(eq("gemini_key"), eq(""))).thenReturn("user_gemini_key")
+        assertEquals("user_gemini_key", preferencesManager.getGeminiKey())
+    }
+
+    @Test
+    fun testGetGeminiKey_fallsBackToBuildConfigWhenEmpty() {
+        `when`(sharedPreferences.getString(eq("gemini_key"), eq(""))).thenReturn("")
+        assertEquals(BuildConfig.GEMINI_API_KEY, preferencesManager.getGeminiKey())
+    }
+
+    @Test
+    fun testGetNewsKey_returnsSavedWhenNotEmpty() {
+        `when`(sharedPreferences.getString(eq("news_key"), eq(""))).thenReturn("user_news_key")
+        assertEquals("user_news_key", preferencesManager.getNewsKey())
+    }
+
+    @Test
+    fun testGetNewsKey_fallsBackToBuildConfigWhenEmpty() {
+        `when`(sharedPreferences.getString(eq("news_key"), eq(""))).thenReturn("")
+        assertEquals(BuildConfig.NEWS_API_KEY, preferencesManager.getNewsKey())
     }
 }

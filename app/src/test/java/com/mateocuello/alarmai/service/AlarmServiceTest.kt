@@ -48,6 +48,9 @@ class AlarmServiceTest {
         pendingIntentMock.`when`<PendingIntent?> {
             PendingIntent.getActivity(any(), anyInt(), any(), anyInt())
         }.thenReturn(mock())
+        pendingIntentMock.`when`<PendingIntent?> {
+            PendingIntent.getActivity(any(), anyInt(), any(), anyInt(), anyOrNull())
+        }.thenReturn(mock())
 
         uriMockStatic = Mockito.mockStatic(Uri::class.java)
         uriMockStatic.`when`<Uri> { Uri.parse(any()) }.thenReturn(mockUri)
