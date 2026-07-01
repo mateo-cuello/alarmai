@@ -16,6 +16,7 @@ import com.mateocuello.alarmai.service.AlarmService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 
 enum class AlarmState {
     RINGING,
@@ -119,9 +120,9 @@ class AlarmViewModel @JvmOverloads constructor(
                 val geminiKey = prefs.getGeminiKey()
                 val modelName = prefs.getGeminiModel()
                 
-                // Check for valid cached pre-fetch briefing (less than 5 minutes old = 300,000 ms)
+                // Check for valid cached pre-fetch briefing (less than 30 minutes old = 1,800,000 ms)
                 val (cachedBriefing, cachedPrompt, cachedTime) = prefs.getPrefetchedBriefing()
-                val isCacheValid = cachedBriefing.isNotEmpty() && (System.currentTimeMillis() - cachedTime < 300_000)
+                val isCacheValid = cachedBriefing.isNotEmpty() && (System.currentTimeMillis() - cachedTime < 1800_000)
                 
                 if (isCacheValid) {
                     Log.d("AlarmViewModel", "Using valid prefetched briefing!")
@@ -148,15 +149,18 @@ class AlarmViewModel @JvmOverloads constructor(
                         ?: locationProvider.getCurrentLocation()?.also { prefs.saveLocation(it.first, it.second) }
                         ?: prefs.getLocation()
                     
-                    _statusMessage.value = if (isEs) "Obteniendo clima y noticias..." else "Fetching weather & news..."
-                    val weatherData = weatherRepository.getWeather(lat, lon)
-                    
                     val newsTopics = prefs.getNewsTopics()
                     val language = prefs.getLanguage()
-                    val newsData = newsRepository.getNews(newsTopics, language)
+
+                    _statusMessage.value = if (isEs) "Obteniendo datos..." else "Fetching data..."
                     
-                    _statusMessage.value = if (isEs) "Leyendo agenda de hoy..." else "Reading today's schedule..."
-                    val calendarData = calendarRepository.getTodayEvents()
+                    val weatherDeferred = async { weatherRepository.getWeather(lat, lon) }
+                    val newsDeferred = async { newsRepository.getNews(newsTopics, language) }
+                    val calendarDeferred = async { calendarRepository.getTodayEvents() }
+
+                    val weatherData = weatherDeferred.await()
+                    val newsData = newsDeferred.await()
+                    val calendarData = calendarDeferred.await()
 
                     _statusMessage.value = if (isEs) "Llamando a Gemini AI..." else "Calling Gemini AI..."
                     val initialBriefing = geminiAgentManager.startSession(

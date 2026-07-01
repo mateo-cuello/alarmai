@@ -20,11 +20,7 @@ class VoiceManager(
     private val prefs: PreferencesManager = PreferencesManager(context),
     private val ttsFactory: (Context, TextToSpeech.OnInitListener) -> TextToSpeech = { ctx, listener -> TextToSpeech(ctx, listener) },
     private val speechRecognizerFactory: (Context) -> SpeechRecognizer = { ctx ->
-        if (sdkVersionProvider() >= android.os.Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(ctx)) {
-            SpeechRecognizer.createOnDeviceSpeechRecognizer(ctx)
-        } else {
-            SpeechRecognizer.createSpeechRecognizer(ctx)
-        }
+        SpeechRecognizer.createSpeechRecognizer(ctx)
     }
 ) {
     companion object {
@@ -251,6 +247,7 @@ class VoiceManager(
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale.toLanguageTag())
                     putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, locale.toLanguageTag())
                     putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                    putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
                 }
 
                 speechRecognizer?.setRecognitionListener(object : RecognitionListener {

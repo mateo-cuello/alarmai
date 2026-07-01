@@ -13,6 +13,8 @@ import com.mateocuello.alarmai.data.repository.WeatherRepository
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
@@ -40,19 +42,23 @@ class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWork
             prefs.getLocation()
         }
 
-        // 2. Fetch Weather
         val weatherRepository = WeatherRepository()
-        val weatherData = weatherRepository.getWeather(lat, lon)
-
-        // 3. Fetch News (Google News RSS - no API key needed)
         val newsRepository = NewsRepository()
+        val calendarRepository = CalendarRepository(context)
         val newsTopics = prefs.getNewsTopics()
         val language = prefs.getLanguage()
-        val newsData = newsRepository.getNews(newsTopics, language)
 
-        // 4. Fetch Calendar
-        val calendarRepository = CalendarRepository(context)
-        val calendarData = calendarRepository.getTodayEvents()
+        val (weatherData, newsData, calendarData) = coroutineScope {
+            val weatherDeferred = async { weatherRepository.getWeather(lat, lon) }
+            val newsDeferred = async { newsRepository.getNews(newsTopics, language) }
+            val calendarDeferred = async { calendarRepository.getTodayEvents() }
+            
+            Triple(
+                weatherDeferred.await(),
+                newsDeferred.await(),
+                calendarDeferred.await()
+            )
+        }
 
         // 5. Fetch World Cup matches
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -77,21 +83,23 @@ class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWork
         
         val initialPrompt = if (language == "es") {
             """
-                Comienza el resumen matutino. Aquí están los datos del día:
+                Comienza el resumen matutino.
                 - Clima: $weatherData
-                - Noticias: $newsData
                 - Eventos de Calendario: $calendarData
                 
-                Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume estos datos de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día.
+                Usa tu herramienta de búsqueda de Google (googleSearch) para buscar las noticias más recientes sobre estos temas: $newsData.
+                
+                Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume el clima, calendario, y los titulares más importantes de las noticias de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día. IMPORTANTE: No des un mensaje genérico de introducción antes de las noticias ni inventes datos. Da las noticias reales obtenidas de la búsqueda directamente.
             """.trimIndent()
         } else {
             """
-                Start the morning briefing. Here is the daily data:
+                Start the morning briefing.
                 - Weather: $weatherData
-                - News: $newsData
                 - Calendar Events: $calendarData
                 
-                Please greet the user warmly, state the time (or wish them a good morning), summarize this data in a highly engaging, concise way, and ask how they'd like to start their day.
+                Use your Google Search tool (googleSearch) to find the latest news headlines about these topics: $newsData.
+                
+                Please greet the user warmly, state the time (or wish them a good morning), summarize the weather, calendar, and the top news headlines in a highly engaging, concise way, and ask how they'd like to start their day. IMPORTANT: Do not give a generic introductory message before the news or invent facts. Deliver the real news obtained from the search directly.
             """.trimIndent()
         }
 

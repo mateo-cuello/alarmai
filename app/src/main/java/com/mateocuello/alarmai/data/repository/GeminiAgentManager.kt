@@ -119,21 +119,23 @@ class GeminiAgentManager @JvmOverloads constructor(
 
             val initialPrompt = if (language == "es") {
                 """
-                    Comienza el resumen matutino. Aquí están los datos del día:
+                    Comienza el resumen matutino.
                     - Clima: $weatherData
-                    - Noticias: $newsData
                     - Eventos de Calendario: $calendarData
                     
-                    Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume estos datos de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día.
+                    Usa tu herramienta de búsqueda de Google (googleSearch) para buscar las noticias más recientes sobre estos temas: $newsData.
+                    
+                    Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume el clima, calendario, y los titulares más importantes de las noticias de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día. IMPORTANTE: No des un mensaje genérico de introducción antes de las noticias ni inventes datos. Da las noticias reales obtenidas de la búsqueda directamente.
                 """.trimIndent()
             } else {
                 """
-                    Start the morning briefing. Here is the daily data:
+                    Start the morning briefing.
                     - Weather: $weatherData
-                    - News: $newsData
                     - Calendar Events: $calendarData
                     
-                    Please greet the user warmly, state the time (or wish them a good morning), summarize this data in a highly engaging, concise way, and ask how they'd like to start their day.
+                    Use your Google Search tool (googleSearch) to find the latest news headlines about these topics: $newsData.
+                    
+                    Please greet the user warmly, state the time (or wish them a good morning), summarize the weather, calendar, and the top news headlines in a highly engaging, concise way, and ask how they'd like to start their day. IMPORTANT: Do not give a generic introductory message before the news or invent facts. Deliver the real news obtained from the search directly.
                 """.trimIndent()
             }
 
