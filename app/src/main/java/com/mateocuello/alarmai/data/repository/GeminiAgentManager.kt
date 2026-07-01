@@ -16,8 +16,7 @@ import okhttp3.Request
 class GeminiAgentManager @JvmOverloads constructor(
     private val context: Context,
     private val prefs: PreferencesManager,
-    private val worldCupRepository: WorldCupRepository = WorldCupRepository()
-) {
+    ) {
 
     data class Content(
         val role: String,
@@ -48,31 +47,9 @@ class GeminiAgentManager @JvmOverloads constructor(
 
     private var chatSession: CustomChatSession? = null
 
-    private fun getWorldCupContextText(): String {
-        val instructions = try {
-            context.assets.open("worldcup_context.txt").use { inputStream ->
-                BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                    reader.readText()
-                }
-            }
-        } catch (e: Exception) {
-            ""
-        }
-        val fixture = try {
-            context.assets.open("worldcup_2026.json").use { inputStream ->
-                BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                    reader.readText()
-                }
-            }
-        } catch (e: Exception) {
-            ""
-        }
-        return "$instructions\n\nComplete FIFA World Cup 2026 Fixture Schedule (JSON):\n$fixture"
-    }
-
+    
     private fun getSystemInstructionText(language: String, tone: String): String {
         val now = java.util.Date()
-        val worldCupContext = getWorldCupContextText()
         return if (language == "es") {
             val dateSdf = java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", java.util.Locale("es", "ES"))
             val timeSdf = java.text.SimpleDateFormat("HH:mm", java.util.Locale("es", "ES"))
@@ -88,16 +65,11 @@ class GeminiAgentManager @JvmOverloads constructor(
                 
                 Contexto del usuario:
                 - Fecha y hora actual del usuario: $dateStr, $timeStr
-                - Copa Mundial FIFA 2026: Se está disputando en este momento (junio y julio de 2026).
                 - Estilo y tono de comunicación preferido: $tone
                 
                 HERRAMIENTAS DISPONIBLES:
-                - Tienes herramientas para consultar el fixture del Mundial 2026 (getWorldCupMatchesForDate y getWorldCupMatchesByTeam).
-                - Tienes una herramienta para buscar noticias actuales (searchNews).
-                - DEBES usar getWorldCupMatchesForDate o getWorldCupMatchesByTeam para CUALQUIER pregunta sobre partidos del Mundial. NUNCA adivines ni uses tu memoria interna para partidos.
-                - Para noticias actualizadas o información sobre eventos actuales, usa la herramienta searchNews.
-                
-                $worldCupContext
+                - Tienes la herramienta de búsqueda de Google (googleSearch) para buscar noticias o información actual.
+                - Usa tu herramienta de búsqueda de Google cuando el usuario pregunte por información del mundo real.
             """.trimIndent()
         } else {
             val dateSdf = java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", java.util.Locale.US)
@@ -114,16 +86,11 @@ class GeminiAgentManager @JvmOverloads constructor(
                 
                 User Context:
                 - User's current date and time: $dateStr at $timeStr
-                - FIFA World Cup 2026: Currently ongoing (June/July 2026).
                 - Preferred communication style/tone: $tone
                 
                 AVAILABLE TOOLS:
-                - You have tools to query the 2026 World Cup fixture (getWorldCupMatchesForDate and getWorldCupMatchesByTeam).
-                - You have a tool to search current news headlines (searchNews).
-                - You MUST use getWorldCupMatchesForDate or getWorldCupMatchesByTeam for ANY question about World Cup matches. NEVER guess or use your internal memory for match information.
-                - For current news or headlines, use the searchNews tool.
-                
-                $worldCupContext
+                - You have the Google Search tool (googleSearch) to search for current news or information.
+                - Use your Google Search tool when the user asks for real-world information.
             """.trimIndent()
         }
     }
@@ -133,21 +100,14 @@ class GeminiAgentManager @JvmOverloads constructor(
         weatherData: String,
         newsData: String,
         calendarData: String,
-        worldCupData: String = "",
         modelName: String = "gemini-2.5-flash"
     ): String = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             val language = prefs.getLanguage()
             if (language == "es") {
-                val wcInfo = if (worldCupData.isNotBlank() && !worldCupData.contains("No matches", ignoreCase = true)) {
-                    " Además, hoy hay programados partidos para el Mundial 2026. "
-                } else " "
-                return@withContext "¡Buenos días! Esta es una simulación de tu alarma de IA. Como tu clave de API de Gemini no está configurada, estoy funcionando en modo de simulación local. El clima de hoy se ve grandioso, tu agenda está libre y la computación cuántica es noticia de portada.${wcInfo}¿Cómo te sientes hoy?"
+                return@withContext "¡Buenos días! Esta es una simulación de tu alarma de IA. Como tu clave de API de Gemini no está configurada, estoy funcionando en modo de simulación local. El clima de hoy se ve grandioso, tu agenda está libre y la computación cuántica es noticia de portada. ¿Cómo te sientes hoy?"
             } else {
-                val wcInfo = if (worldCupData.isNotBlank() && !worldCupData.contains("No matches", ignoreCase = true)) {
-                    " Also, today there are some matches scheduled for the 2026 World Cup. "
-                } else " "
-                return@withContext "Good morning! This is a demo of your AI alarm. Since your Gemini API key is not configured in settings, I am running in local simulation mode. Today's weather looks great, your calendar is clear, and quantum computing made headlines.${wcInfo}How are you feeling today?"
+                return@withContext "Good morning! This is a demo of your AI alarm. Since your Gemini API key is not configured in settings, I am running in local simulation mode. Today's weather looks great, your calendar is clear, and quantum computing made headlines. How are you feeling today?"
             }
         }
 
@@ -163,9 +123,8 @@ class GeminiAgentManager @JvmOverloads constructor(
                     - Clima: $weatherData
                     - Noticias: $newsData
                     - Eventos de Calendario: $calendarData
-                    - Partidos de la Copa Mundial FIFA 2026 de hoy: $worldCupData
                     
-                    Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume estos datos (incluyendo los partidos del Mundial de hoy si los hay) de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día.
+                    Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume estos datos de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día.
                 """.trimIndent()
             } else {
                 """
@@ -173,9 +132,8 @@ class GeminiAgentManager @JvmOverloads constructor(
                     - Weather: $weatherData
                     - News: $newsData
                     - Calendar Events: $calendarData
-                    - Today's FIFA World Cup 2026 Matches: $worldCupData
                     
-                    Please greet the user warmly, state the time (or wish them a good morning), summarize this data (including today's World Cup matches if any are scheduled) in a highly engaging, concise way, and ask how they'd like to start their day.
+                    Please greet the user warmly, state the time (or wish them a good morning), summarize this data in a highly engaging, concise way, and ask how they'd like to start their day.
                 """.trimIndent()
             }
 
@@ -237,15 +195,6 @@ class GeminiAgentManager @JvmOverloads constructor(
                 return@withContext when {
                     userInput.contains("clima", ignoreCase = true) || userInput.contains("tiempo", ignoreCase = true) -> "El pronóstico de hoy es soleado y agradable, alrededor de veintidós grados Celsius."
                     userInput.contains("noticias", ignoreCase = true) -> "En noticias tecnológicas, investigadores lograron avances en la eficiencia de paneles solares."
-                    userInput.contains("mundial", ignoreCase = true) || 
-                    userInput.contains("copa", ignoreCase = true) || 
-                    userInput.contains("partido", ignoreCase = true) || 
-                    userInput.contains("fixture", ignoreCase = true) || 
-                    userInput.contains("cronograma", ignoreCase = true) || 
-                    userInput.contains("programación", ignoreCase = true) || 
-                    ((userInput.contains("calendario", ignoreCase = true) || userInput.contains("agenda", ignoreCase = true)) && 
-                     (userInput.contains("mundial", ignoreCase = true) || userInput.contains("copa", ignoreCase = true) || userInput.contains("partido", ignoreCase = true) || userInput.contains("fixture", ignoreCase = true))) -> 
-                        "Hoy en el Mundial 2026 se enfrentan Canadá contra Bosnia a las tres de la tarde y Estados Unidos contra Paraguay a las seis de la tarde."
                     userInput.contains("calendario", ignoreCase = true) || userInput.contains("agenda", ignoreCase = true) -> "No tienes eventos próximos en tu calendario."
                     else -> "¡Te escucho! Estoy funcionando en modo demo, pero una vez que configures tu clave API de Gemini en los ajustes, podremos tener una conversación completa."
                 }
@@ -253,15 +202,6 @@ class GeminiAgentManager @JvmOverloads constructor(
                 return@withContext when {
                     userInput.contains("weather", ignoreCase = true) -> "Today's forecast is sunny and pleasant, about twenty-two degrees Celsius."
                     userInput.contains("news", ignoreCase = true) -> "In technology news, researchers have made breakthrough progress in solar panel efficiency."
-                    userInput.contains("world cup", ignoreCase = true) || 
-                    userInput.contains("worldcup", ignoreCase = true) || 
-                    userInput.contains("match", ignoreCase = true) || 
-                    userInput.contains("game", ignoreCase = true) || 
-                    userInput.contains("fixture", ignoreCase = true) || 
-                    userInput.contains("bracket", ignoreCase = true) || 
-                    ((userInput.contains("calendar", ignoreCase = true) || userInput.contains("schedule", ignoreCase = true)) && 
-                     (userInput.contains("world cup", ignoreCase = true) || userInput.contains("worldcup", ignoreCase = true) || userInput.contains("match", ignoreCase = true) || userInput.contains("game", ignoreCase = true) || userInput.contains("fixture", ignoreCase = true))) -> 
-                        "Today in the 2026 World Cup, Canada plays Bosnia & Herzegovina at 3 PM and USA plays Paraguay at 6 PM."
                     userInput.contains("calendar", ignoreCase = true) || userInput.contains("schedule", ignoreCase = true) -> "You have no upcoming events on your calendar."
                     else -> "I hear you! I'm running in demo mode, but once you set your Gemini API key in settings, we can have a full open-ended conversation about anything."
                 }
@@ -320,31 +260,6 @@ class GeminiAgentManager @JvmOverloads constructor(
                     val newPreference = functionCall.args["newPreference"]?.toString() ?: ""
                     prefs.saveTonePreference(newPreference)
                     responseParts.add(FunctionResponsePart(name, mapOf("success" to true)))
-                } else if (name.endsWith("getWorldCupMatchesForDate") || name.endsWith("getWorldCupMatchForDate")) {
-                    val dateString = functionCall.args["dateString"]?.toString()
-                        ?: functionCall.args["date"]?.toString()
-                        ?: functionCall.args["date_string"]?.toString()
-                         ?: ""
-                    val repo = worldCupRepository
-                    val summary = repo.getTodayMatchesSummary(context, dateString)
-                    responseParts.add(FunctionResponsePart(name, mapOf("summary" to summary)))
-                } else if (name.endsWith("getWorldCupMatchesByTeam")) {
-                    val teamName = functionCall.args["teamName"]?.toString()
-                        ?: functionCall.args["team_name"]?.toString()
-                        ?: functionCall.args["team"]?.toString()
-                         ?: ""
-                    val repo = worldCupRepository
-                    val summary = repo.getMatchesByTeam(context, teamName)
-                    responseParts.add(FunctionResponsePart(name, mapOf("summary" to summary)))
-                } else if (name.endsWith("searchNews")) {
-                    val query = functionCall.args["query"]?.toString()
-                        ?: functionCall.args["topic"]?.toString()
-                        ?: ""
-                    val lang = functionCall.args["language"]?.toString()
-                        ?: prefs.getLanguage()
-                    val newsRepo = NewsRepository()
-                    val result = newsRepo.searchNewsByQuery(query, lang)
-                    responseParts.add(FunctionResponsePart(name, mapOf("results" to result)))
                 }
             }
 
@@ -482,63 +397,14 @@ class GeminiAgentManager @JvmOverloads constructor(
         }
         functionDeclarations.put(updateTone)
 
-        // getWorldCupMatchesForDate
-        val getWorldCupMatches = JSONObject().apply {
-            put("name", "getWorldCupMatchesForDate")
-            put("description", "Retrieves the scheduled FIFA World Cup 2026 matches for a specific date. You MUST call this tool whenever the user asks about World Cup matches for today, tomorrow, yesterday, or any specific date. Pass the date in yyyy-MM-dd format. Use 'today' for today's date, 'tomorrow' for tomorrow, 'yesterday' for yesterday.")
-            put("parameters", JSONObject().apply {
-                put("type", "object")
-                put("properties", JSONObject().apply {
-                    put("dateString", JSONObject().apply {
-                        put("type", "string")
-                        put("description", "The date to query. Can be 'today', 'tomorrow', 'yesterday', or a date in yyyy-MM-dd format (e.g. 2026-06-12)")
-                    })
-                })
-                put("required", JSONArray().put("dateString"))
-            })
-        }
-        functionDeclarations.put(getWorldCupMatches)
-
-        // getWorldCupMatchesByTeam
-        val getWorldCupMatchesByTeam = JSONObject().apply {
-            put("name", "getWorldCupMatchesByTeam")
-            put("description", "Retrieves ALL scheduled FIFA World Cup 2026 matches for a specific team (all dates). You MUST call this tool when the user asks when a team plays, their schedule, their next match, or any team-specific World Cup question.")
-            put("parameters", JSONObject().apply {
-                put("type", "object")
-                put("properties", JSONObject().apply {
-                    put("teamName", JSONObject().apply {
-                        put("type", "string")
-                        put("description", "The team name to search for (e.g. 'Argentina', 'Brazil', 'USA', 'Mexico', 'England')")
-                    })
-                })
-                put("required", JSONArray().put("teamName"))
-            })
-        }
-        functionDeclarations.put(getWorldCupMatchesByTeam)
-
-        // searchNews
-        val searchNews = JSONObject().apply {
-            put("name", "searchNews")
-            put("description", "Searches for the latest real-time news headlines on a specific topic or query. Use this when the user asks about current events, news, or what's happening on any topic.")
-            put("parameters", JSONObject().apply {
-                put("type", "object")
-                put("properties", JSONObject().apply {
-                    put("query", JSONObject().apply {
-                        put("type", "string")
-                        put("description", "The news topic or search query (e.g. 'Argentina economy', 'technology news', 'climate change')")
-                    })
-                    put("language", JSONObject().apply {
-                        put("type", "string")
-                        put("description", "Language code: 'es' for Spanish or 'en' for English. Defaults to user's language.")
-                    })
-                })
-                put("required", JSONArray().put("query"))
-            })
-        }
-        functionDeclarations.put(searchNews)
-
         toolObject.put("functionDeclarations", functionDeclarations)
         toolsArray.put(toolObject)
+
+        
+        val googleSearchObject = JSONObject().apply {
+            put("googleSearch", JSONObject())
+        }
+        toolsArray.put(googleSearchObject)
 
         body.put("tools", toolsArray)
 

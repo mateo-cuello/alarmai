@@ -10,7 +10,7 @@ When the alarm fires, it launches a full-screen window. Upon dismissal, the app 
 
 * **Exact Alarm Scheduling**: Schedules waking times via AlarmManager, supporting exact timing even under Android Doze mode.
 * **Full-Screen Interaction**: Wakes up and displays over the phone lockscreen.
-* **Information Aggregation**: Gathers data from Open-Meteo, Google News RSS, and system calendar.
+* **Information Aggregation**: Gathers data from Open-Meteo, Gemini Google Search for news, and system calendar.
 * **Expedited Pre-fetching**: Leverages WorkManager to pre-generate AI responses 2 minutes before the alarm triggers, avoiding ANR timeouts and bypassing Doze mode network constraints.
 * **Conversational Voice Loop**: Speaks briefings via TTS and opens the microphone for user follow-up questions.
 * **Direct Boot Recovery**: Restores scheduled alarms automatically after overnight device updates/reboots before the screen is unlocked.

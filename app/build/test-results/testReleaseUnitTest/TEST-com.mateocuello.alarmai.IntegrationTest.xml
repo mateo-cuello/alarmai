@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mateocuello.alarmai.IntegrationTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-06-23T19:57:37.364Z" hostname="INSPRION16" time="0.118">
-  <properties/>
-  <testcase name="testRealGeminiApiCall" classname="com.mateocuello.alarmai.IntegrationTest" time="0.118">
-    <skipped/>
-  </testcase>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

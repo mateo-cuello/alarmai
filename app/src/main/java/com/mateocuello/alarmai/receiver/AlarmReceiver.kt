@@ -14,13 +14,16 @@ class AlarmReceiver : BroadcastReceiver() {
         
         val prefs = PreferencesManager(context)
         val alarm = prefs.getAlarm()
-        if (alarm.isActive) {
-            if (alarm.daysOfWeek.isNotEmpty()) {
-                val scheduler = AlarmScheduler(context)
-                scheduler.schedule(alarm, fromReceiver = true)
-            } else {
-                val updated = alarm.copy(isActive = false)
-                prefs.saveAlarm(updated)
+        val isTest = intent.getBooleanExtra("is_test", false)
+        if (alarm.isActive || isTest) {
+            if (alarm.isActive) {
+                if (alarm.daysOfWeek.isNotEmpty()) {
+                    val scheduler = AlarmScheduler(context)
+                    scheduler.schedule(alarm, fromReceiver = true)
+                } else {
+                    val updated = alarm.copy(isActive = false)
+                    prefs.saveAlarm(updated)
+                }
             }
 
             val serviceIntent = Intent(context, AlarmService::class.java)

@@ -734,7 +734,9 @@ fun MainScreen(viewModel: MainViewModel) {
 private fun triggerTestAlarm(context: Context) {
     Toast.makeText(context, "Alarm will trigger in 5 seconds. Lock your phone now!", Toast.LENGTH_SHORT).show()
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    val intent = Intent(context, AlarmReceiver::class.java)
+    val intent = Intent(context, AlarmReceiver::class.java).apply {
+        putExtra("is_test", true)
+    }
     val pendingIntent = PendingIntent.getBroadcast(
         context,
         1001,

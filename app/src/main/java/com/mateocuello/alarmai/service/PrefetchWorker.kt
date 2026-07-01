@@ -10,7 +10,6 @@ import com.mateocuello.alarmai.data.repository.GeminiAgentManager
 import com.mateocuello.alarmai.data.repository.LocationProvider
 import com.mateocuello.alarmai.data.repository.NewsRepository
 import com.mateocuello.alarmai.data.repository.WeatherRepository
-import com.mateocuello.alarmai.data.repository.WorldCupRepository
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -58,8 +57,6 @@ class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWork
         // 5. Fetch World Cup matches
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         val todayDateString = sdf.format(Date())
-        val worldCupRepository = WorldCupRepository()
-        val worldCupData = worldCupRepository.getTodayMatchesSummary(context, todayDateString)
 
         // 6. Build initial prompt and call Gemini
         val geminiAgentManager = GeminiAgentManager(context, prefs)
@@ -72,7 +69,6 @@ class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWork
             weatherData = weatherData,
             newsData = newsData,
             calendarData = calendarData,
-            worldCupData = worldCupData,
             modelName = modelName
         )
 
@@ -85,9 +81,8 @@ class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWork
                 - Clima: $weatherData
                 - Noticias: $newsData
                 - Eventos de Calendario: $calendarData
-                - Partidos de la Copa Mundial FIFA 2026 de hoy: $worldCupData
                 
-                Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume estos datos (incluyendo los partidos del Mundial de hoy si los hay) de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día.
+                Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume estos datos de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día.
             """.trimIndent()
         } else {
             """
@@ -95,9 +90,8 @@ class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWork
                 - Weather: $weatherData
                 - News: $newsData
                 - Calendar Events: $calendarData
-                - Today's FIFA World Cup 2026 Matches: $worldCupData
                 
-                Please greet the user warmly, state the time (or wish them a good morning), summarize this data (including today's World Cup matches if any are scheduled) in a highly engaging, concise way, and ask how they'd like to start their day.
+                Please greet the user warmly, state the time (or wish them a good morning), summarize this data in a highly engaging, concise way, and ask how they'd like to start their day.
             """.trimIndent()
         }
 

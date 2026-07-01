@@ -2,6 +2,7 @@ package com.mateocuello.alarmai.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.mateocuello.alarmai.BuildConfig
 import com.mateocuello.alarmai.data.model.Alarm
 
 class PreferencesManager(context: Context) {
@@ -65,7 +66,9 @@ class PreferencesManager(context: Context) {
     }
 
     fun getGeminiKey(): String {
-        return prefs.getString(KEY_GEMINI_KEY, "") ?: ""
+        val saved = prefs.getString(KEY_GEMINI_KEY, "") ?: ""
+        if (saved.isNotEmpty()) return saved
+        return BuildConfig.GEMINI_API_KEY
     }
 
     fun saveGeminiModel(model: String) {
@@ -81,7 +84,9 @@ class PreferencesManager(context: Context) {
     }
 
     fun getNewsKey(): String {
-        return prefs.getString(KEY_NEWS_KEY, "") ?: ""
+        val saved = prefs.getString(KEY_NEWS_KEY, "") ?: ""
+        if (saved.isNotEmpty()) return saved
+        return BuildConfig.NEWS_API_KEY
     }
 
     fun saveNewsTopics(topics: String) {

@@ -37,7 +37,7 @@ data class ChatMessage(
     val text: String
 )
 
-class AlarmViewModel(
+class AlarmViewModel @JvmOverloads constructor(
     application: Application,
     private val prefs: PreferencesManager = PreferencesManager(application),
     private val locationProvider: LocationProvider = LocationProvider(application),
@@ -157,12 +157,6 @@ class AlarmViewModel(
                     
                     _statusMessage.value = if (isEs) "Leyendo agenda de hoy..." else "Reading today's schedule..."
                     val calendarData = calendarRepository.getTodayEvents()
-                    
-                    _statusMessage.value = if (isEs) "Buscando partidos del Mundial..." else "Checking World Cup matches..."
-                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-                    val todayDateString = sdf.format(java.util.Date())
-                    val worldCupRepository = com.mateocuello.alarmai.data.repository.WorldCupRepository()
-                    val worldCupData = worldCupRepository.getTodayMatchesSummary(getApplication(), todayDateString)
 
                     _statusMessage.value = if (isEs) "Llamando a Gemini AI..." else "Calling Gemini AI..."
                     val initialBriefing = geminiAgentManager.startSession(
@@ -170,7 +164,6 @@ class AlarmViewModel(
                         weatherData = weatherData,
                         newsData = newsData,
                         calendarData = calendarData,
-                        worldCupData = worldCupData,
                         modelName = modelName
                     )
                     
