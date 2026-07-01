@@ -233,46 +233,14 @@ class GeminiAgentManager @JvmOverloads constructor(
     private suspend fun callGeminiAndHandleFunctions(session: CustomChatSession): Content {
         val url = "https://generativelanguage.googleapis.com/v1beta/models/${session.modelName}:generateContent?key=${session.apiKey}"
 
-        var iterations = 0
-        val maxIterations = 10 // Safety limit to prevent infinite loops
+        val requestBody = buildRequestBody(session.history, session.systemInstructionText)
+        val responseJson = makePostRequest(url, requestBody.toString())
+        val responseContent = parseResponseContent(responseJson) ?: throw Exception("Failed to parse response")
 
-        while (iterations < maxIterations) {
-            iterations++
-            val requestBody = buildRequestBody(session.history, session.systemInstructionText)
-            val responseJson = makePostRequest(url, requestBody.toString())
-            val responseContent = parseResponseContent(responseJson) ?: throw Exception("Failed to parse response")
+        // Add the model's response to history
+        session.history.add(responseContent)
 
-            // Add the model's response to history
-            session.history.add(responseContent)
-
-            // Extract all function calls from the response
-            val functionCalls = responseContent.parts.filterIsInstance<FunctionCallPart>()
-            if (functionCalls.isEmpty()) {
-                // Done!
-                return responseContent
-            }
-
-            // Execute function calls
-            val responseParts = mutableListOf<Part>()
-            for (functionCall in functionCalls) {
-                val name = functionCall.name
-                if (name.endsWith("updateTonePreference")) {
-                    val newPreference = functionCall.args["newPreference"]?.toString() ?: ""
-                    prefs.saveTonePreference(newPreference)
-                    responseParts.add(FunctionResponsePart(name, mapOf("success" to true)))
-                }
-            }
-
-            // Add function response as user turn containing FunctionResponseParts
-            if (responseParts.isNotEmpty()) {
-                val toolResponseContent = Content("user", responseParts)
-                session.history.add(toolResponseContent)
-            }
-        }
-
-        // If we reach max iterations, return the last response
-        return session.history.lastOrNull { it.role == "model" }
-            ?: Content("model", listOf(TextPart("I'm having trouble processing your request. Can you try again?")))
+        return responseContent
     }
 
     internal fun contentToJson(content: Content): JSONObject {
@@ -375,31 +343,6 @@ class GeminiAgentManager @JvmOverloads constructor(
 
         // Tools
         val toolsArray = JSONArray()
-
-        // Tool 1: Custom function declarations
-        val toolObject = JSONObject()
-        val functionDeclarations = JSONArray()
-
-        // updateTonePreference
-        val updateTone = JSONObject().apply {
-            put("name", "updateTonePreference")
-            put("description", "Updates the user's preferred communication tone or style of the assistant (e.g. sarcastic, formal, energetic, funny, etc.).")
-            put("parameters", JSONObject().apply {
-                put("type", "object")
-                put("properties", JSONObject().apply {
-                    put("newPreference", JSONObject().apply {
-                        put("type", "string")
-                        put("description", "The new preferred tone or style of communication requested by the user")
-                    })
-                })
-                put("required", JSONArray().put("newPreference"))
-            })
-        }
-        functionDeclarations.put(updateTone)
-
-        toolObject.put("functionDeclarations", functionDeclarations)
-        toolsArray.put(toolObject)
-
         
         val googleSearchObject = JSONObject().apply {
             put("googleSearch", JSONObject())

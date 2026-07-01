@@ -160,3 +160,111 @@ Remove or simplify the `canScheduleExactAlarms()` runtime check and settings red
 ### Security
 - [ ] No API keys or sensitive credentials present in source code
 
+## Follow-up — 2026-06-23T21:11:10Z
+
+Fix critical bugs and version incompatibilities in the AlarmAI Android alarm clock app. The app broke after commit `ed2f138` and must be restored to full functionality on Android 16 (API 37). Additionally, set up environment configuration for API keys.
+
+Working directory: c:\Users\usuario\alarmai
+Integrity mode: development
+
+## Context
+
+AlarmAI is an Android alarm clock app with an AI assistant (Gemini). The last working commit is `ed2f138063533d635ec7db66f2a4a1c8f5bf62e2`. Current HEAD is `fe4979d`.
+
+### Critical Issue Found
+A research analysis has identified the **primary root cause**: **AGP 8.13.2 is incompatible with Kotlin 1.9.23**. AGP 8.13.x requires Kotlin 2.0+ (likely 2.1+). Additionally, the Compose Compiler Extension 1.5.11 is tied to Kotlin 1.9.x and needs to be replaced with the Compose Compiler Gradle Plugin when upgrading to Kotlin 2.0+. The `compileSdk` and `targetSdk` are still set to 34, not 37.
+
+### Known Symptoms
+1. Test Alarm button doesn't work
+2. When alarm fires, full-screen alarm UI doesn't show — only a notification appears
+3. Tapping the notification crashes with "AlarmAI has stopped working"
+4. General app instability
+
+### Key Files to Investigate
+- `gradle/libs.versions.toml` — AGP 8.13.2 + Kotlin 1.9.23 incompatibility
+- `app/build.gradle.kts` — compileSdk/targetSdk = 34 (should be 37), composeOptions needs updating
+- `gradle/wrapper/gradle-wrapper.properties` — Gradle wrapper version
+- `app/src/main/AndroidManifest.xml` — permissions and activity declarations (appear correct)
+- `app/src/main/java/com/mateocuello/alarmai/service/AlarmService.kt` — alarm service
+- `app/src/main/java/com/mateocuello/alarmai/receiver/AlarmReceiver.kt` — alarm receiver
+- `app/src/main/java/com/mateocuello/alarmai/receiver/AlarmScheduler.kt` — alarm scheduling
+- `app/src/main/java/com/mateocuello/alarmai/ui/alarm/AlarmActivity.kt` — full-screen alarm UI
+- `app/src/main/java/com/mateocuello/alarmai/ui/alarm/AlarmViewModel.kt` — alarm logic
+- `app/src/main/java/com/mateocuello/alarmai/data/repository/VoiceManager.kt` — voice/TTS
+- `app/src/main/java/com/mateocuello/alarmai/data/repository/WorldCupRepository.kt` — World Cup data
+
+### Reference: Last Working Commit
+Use `git diff ed2f138063533d635ec7db66f2a4a1c8f5bf62e2 HEAD` to see exactly what changed and identify breaking changes. Also use `git show ed2f138:path/to/file` to see the working state of specific files.
+
+## Requirements
+
+### R1. Fix Gradle/Kotlin Version Incompatibilities
+Upgrade the build toolchain so the project builds successfully on Android 16 (API 37):
+- Update Kotlin from 1.9.23 to 2.1+ (compatible with AGP 8.13.2)
+- Replace Compose Compiler Extension (`composeOptions { kotlinCompilerExtensionVersion }`) with the Compose Compiler Gradle Plugin (required for Kotlin 2.0+)
+- Update any other dependencies (core-ktx, lifecycle, activity-compose, compose BOM, navigation, etc.) to versions compatible with the new Kotlin/AGP/SDK
+- Verify Gradle wrapper version is compatible with AGP 8.13.2
+- Ensure `minSdk` stays at 26
+
+### R2. Fix Alarm Functionality
+After the build compiles, ensure the alarm system works end-to-end:
+- Test Alarm button must trigger the alarm chain correctly (AlarmScheduler → AlarmReceiver → AlarmService → AlarmActivity)
+- Full-screen alarm activity must display over the lock screen when alarm fires
+- Notification tap must open AlarmActivity without crashing
+- AlarmService must properly start as foreground with FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+- All alarm-related Android 16 behavioral changes must be handled
+
+### R3. Environment Configuration
+- Create a `.env` file in the project root with placeholder values for all API keys referenced in the codebase (at minimum: Gemini API key)
+- Add `.env` to `.gitignore`
+- The app should be able to read configuration from this file (minimal changes to existing logic)
+
+## Acceptance Criteria
+
+### Build & Compilation
+- [ ] `./gradlew assembleDebug` completes without errors
+- [ ] `./gradlew test` completes — all existing unit tests pass (or are updated to pass with new Kotlin version)
+- [ ] No Kotlin/AGP/Gradle version incompatibility warnings or errors
+
+### Alarm Functionality
+- [ ] Setting an alarm via the main UI schedules it correctly (verify via logcat or debug output)
+- [ ] When the alarm fires, `AlarmReceiver` triggers → `AlarmService` starts → `AlarmActivity` launches in full-screen over lock screen
+- [ ] Tapping the alarm notification opens `AlarmActivity` without any crash
+- [ ] The "Test Alarm" button immediately triggers the alarm flow (receiver → service → activity)
+- [ ] No "app has stopped" crashes at any point in the alarm flow
+
+### Android 16 (API 37) Compatibility
+- [ ] App installs and runs on an Android 16 (API 37) emulator without crashes
+- [ ] `compileSdk = 37` and `targetSdk = 37` in build.gradle.kts
+- [ ] All permissions and service declarations in AndroidManifest.xml are valid for API 37
+
+### Environment Configuration
+- [ ] `.env` file exists in project root with documented placeholder keys
+- [ ] `.env` is listed in `.gitignore`
+- [ ] App can read API keys from `.env` or falls back to existing configuration
+
+## Verification Plan
+
+### Automated Tests
+Run these commands in the project root:
+```bash
+./gradlew clean assembleDebug 2>&1 | tail -20
+./gradlew test 2>&1 | tail -50
+```
+Both must succeed with 0 failures.
+
+### Emulator Verification
+1. Create/start an Android 16 (API 37) emulator if not running
+2. Install the debug APK: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
+3. Launch the app and verify main screen loads
+4. Tap "Test Alarm" and verify the full-screen alarm activity appears
+5. Set an alarm for 1 minute in the future and verify it fires with full-screen UI
+6. Lock the device, wait for alarm, verify it shows over lock screen
+7. Check logcat for any crashes: `adb logcat -s "AlarmAI" "AndroidRuntime" | head -100`
+
+### Git Verification
+```bash
+git diff HEAD -- .gitignore | grep ".env"
+```
+Must show `.env` was added to `.gitignore`.
+

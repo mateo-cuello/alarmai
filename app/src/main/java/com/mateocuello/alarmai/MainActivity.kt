@@ -726,6 +726,24 @@ fun MainScreen(viewModel: MainViewModel) {
                 ) {
                     Text("Test Alarm (Fires in 5 Seconds)", fontWeight = FontWeight.Bold, color = Color.White)
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        val intent = Intent(context, com.mateocuello.alarmai.ui.alarm.AlarmActivity::class.java).apply {
+                            putExtra("is_direct_invoke", true)
+                        }
+                        context.startActivity(intent)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text("Talk to AI Assistant Now", fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
         }
     }

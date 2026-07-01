@@ -1,0 +1,126 @@
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 5174397..2cbe10e 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -19,7 +19,7 @@
+     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+     <uses-permission android:name="android.permission.WAKE_LOCK" />
+     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+ 
+@@ -88,10 +88,7 @@
+             android:name=".service.AlarmService"
+             android:enabled="true"
+             android:exported="false"
+-            android:foregroundServiceType="specialUse"
+-            android:directBootAware="true">
+-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="alarm" />
+-        </service>
++            android:foregroundServiceType="mediaPlayback"
++            android:directBootAware="true" />
+ 
+     </application>
+ 
+diff --git a/app/src/main/java/com/mateocuello/alarmai/MainActivity.kt b/app/src/main/java/com/mateocuello/alarmai/MainActivity.kt
+index 066ae89..ef40f95 100644
+--- a/app/src/main/java/com/mateocuello/alarmai/MainActivity.kt
++++ b/app/src/main/java/com/mateocuello/alarmai/MainActivity.kt
+@@ -744,13 +744,7 @@ private fun triggerTestAlarm(context: Context) {
+     val triggerTime = System.currentTimeMillis() + 5000
+ 
+     try {
+-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+-            alarmManager.setExactAndAllowWhileIdle(
+-                AlarmManager.RTC_WAKEUP,
+-                triggerTime,
+-                pendingIntent
+-            )
+-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+             if (alarmManager.canScheduleExactAlarms()) {
+                 alarmManager.setExactAndAllowWhileIdle(
+                     AlarmManager.RTC_WAKEUP,
+@@ -777,7 +771,7 @@ private fun triggerTestAlarm(context: Context) {
+ }
+ 
+ private fun checkExactAlarmPermission(context: Context) {
+-    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.S || Build.VERSION.SDK_INT == Build.VERSION_CODES.S_V2) {
++    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+         if (!alarmManager.canScheduleExactAlarms()) {
+             Toast.makeText(
+diff --git a/app/src/main/java/com/mateocuello/alarmai/receiver/AlarmScheduler.kt b/app/src/main/java/com/mateocuello/alarmai/receiver/AlarmScheduler.kt
+index 4e16b13..6512681 100644
+--- a/app/src/main/java/com/mateocuello/alarmai/receiver/AlarmScheduler.kt
++++ b/app/src/main/java/com/mateocuello/alarmai/receiver/AlarmScheduler.kt
+@@ -66,13 +66,7 @@ class AlarmScheduler(private val context: Context) {
+ 
+         if (preAlarmTime > now) {
+             try {
+-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+-                    alarmManager.setExactAndAllowWhileIdle(
+-                        AlarmManager.RTC_WAKEUP,
+-                        preAlarmTime,
+-                        preAlarmPendingIntent
+-                    )
+-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
++                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                     if (alarmManager.canScheduleExactAlarms()) {
+                         alarmManager.setExactAndAllowWhileIdle(
+                             AlarmManager.RTC_WAKEUP,
+diff --git a/app/src/main/java/com/mateocuello/alarmai/service/AlarmService.kt b/app/src/main/java/com/mateocuello/alarmai/service/AlarmService.kt
+index 8fb4242..4c8c7cd 100644
+--- a/app/src/main/java/com/mateocuello/alarmai/service/AlarmService.kt
++++ b/app/src/main/java/com/mateocuello/alarmai/service/AlarmService.kt
+@@ -3,6 +3,7 @@ package com.mateocuello.alarmai.service
+ import android.app.Notification
+ import android.app.NotificationChannel
+ import android.app.NotificationManager
++import android.app.ActivityOptions
+ import android.app.PendingIntent
+ import android.app.Service
+ import android.content.Context
+@@ -40,11 +41,16 @@ class AlarmService : Service() {
+         val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
+             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+         }
++        val options = ActivityOptions.makeBasic().apply {
++            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
++                setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
++            }
++        }
+         val fullScreenPendingIntent = PendingIntent.getActivity(
+             this,
+             0,
+             fullScreenIntent,
+-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
++            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
++            options.toBundle()
+         )
+ 
+         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+@@ -75,7 +81,7 @@ class AlarmService : Service() {
+             startForeground(
+                 NOTIFICATION_ID, 
+                 notification, 
+-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
++                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+             )
+         } else {
+             startForeground(NOTIFICATION_ID, notification)
+diff --git a/app/src/main/java/com/mateocuello/alarmai/ui/alarm/AlarmViewModel.kt b/app/src/main/java/com/mateocuello/alarmai/ui/alarm/AlarmViewModel.kt
+index b73722a..5a5bb1d 100644
+--- a/app/src/main/java/com/mateocuello/alarmai/ui/alarm/AlarmViewModel.kt
++++ b/app/src/main/java/com/mateocuello/alarmai/ui/alarm/AlarmViewModel.kt
+@@ -35,7 +35,7 @@ data class ChatMessage(
+     val text: String
+ )
+ 
+-class AlarmViewModel(
++class AlarmViewModel @JvmOverloads constructor(
+     application: Application,
+     private val prefs: PreferencesManager = PreferencesManager(application),
+     private val locationProvider: LocationProvider = LocationProvider(application),

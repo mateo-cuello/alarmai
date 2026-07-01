@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-06-24T00:47:15.207Z" hostname="INSPRION16" time="0.615">
+  <properties/>
+  <testcase name="testSttErrorRetryLogic" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.469"/>
+  <testcase name="testRetryLogic_EmptyChat" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.007"/>
+  <testcase name="testOnCleared" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.01"/>
+  <testcase name="testForceClose" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.007"/>
+  <testcase name="testNormalTransitionFlow" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.021"/>
+  <testcase name="testNoSpeechTimeout" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.012"/>
+  <testcase name="testDismissAndTalk_ThrowsException_TransitionsToError" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.011"/>
+  <testcase name="testSpanishGoodbyeKeywords" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.01"/>
+  <testcase name="testRetryLogic_HasUserMessage" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.011"/>
+  <testcase name="testDismissAndTalk_UsesCachedBriefing" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.01"/>
+  <testcase name="testSttErrorLimitReached" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.02"/>
+  <testcase name="testDismissAndTalk_NoCache_FetchesDataAndStartsSession" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.011"/>
+  <testcase name="testEnglishGoodbyeKeywords" classname="com.mateocuello.alarmai.ui.alarm.AlarmViewModelTest" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -59,6 +59,11 @@ class AlarmActivity : ComponentActivity() {
         // Show activity over lock screen
         setupLockScreenFlags()
 
+        val isDirectInvoke = intent.getBooleanExtra("is_direct_invoke", false)
+        if (isDirectInvoke) {
+            viewModel.dismissAndTalk()
+        }
+
         setContent {
             AlarmAITheme {
                 val state by viewModel.uiState.collectAsState()

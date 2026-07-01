@@ -1,0 +1,61 @@
+diff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml
+index 1234567..89abcde 100644
+--- a/gradle/libs.versions.toml
++++ b/gradle/libs.versions.toml
+@@ -1,6 +1,6 @@
+ [versions]
+ agp = "8.13.2"
+-kotlin = "1.9.23"
++kotlin = "2.1.0"
+ coreKtx = "1.12.0"
+ junit = "4.13.2"
+ junitVersion = "1.1.5"
+@@ -44,3 +44,4 @@
+ [plugins]
+ android-application = { id = "com.android.application", version.ref = "agp" }
+ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
++kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+diff --git a/build.gradle.kts b/build.gradle.kts
+index 2345678..9abcdef 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -2,4 +2,5 @@
+ plugins {
+     alias(libs.plugins.android.application) apply false
+     alias(libs.plugins.kotlin.android) apply false
++    alias(libs.plugins.kotlin.compose) apply false
+ }
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+index 3456789..abcdef0 100644
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -2,11 +2,12 @@
+ plugins {
+     alias(libs.plugins.android.application)
+     alias(libs.plugins.kotlin.android)
++    alias(libs.plugins.kotlin.compose)
+ }
+ 
+ android {
+     namespace = "com.mateocuello.alarmai"
+-    compileSdk = 34
++    compileSdk = 37
+ 
+     defaultConfig {
+         applicationId = "com.mateocuello.alarmai"
+@@ -10,3 +11,3 @@
+     defaultConfig {
+         applicationId = "com.mateocuello.alarmai"
+         minSdk = 26
+-        targetSdk = 34
++        targetSdk = 37
+         versionCode = 1
+@@ -39,7 +40,4 @@
+     buildFeatures {
+         compose = true
+         buildConfig = true
+     }
+-    composeOptions {
+-        kotlinCompilerExtensionVersion = "1.5.11" // Matches Kotlin 1.9.23
+-    }
+     packaging {

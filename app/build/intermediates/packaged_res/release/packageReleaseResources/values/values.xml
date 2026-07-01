@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AlarmAI</string>
+    <style name="Theme.AlarmAI" parent="android:Theme.DeviceDefault.NoActionBar">
+        
+    </style>
+    <style name="Theme.AlarmAI.Fullscreen" parent="Theme.AlarmAI">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:showWhenLocked">true</item>
+        <item name="android:turnScreenOn">true</item>
+    </style>
+</resources>
