@@ -1,16 +1,27 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.mateocuello.alarmai"
-    compileSdk = 34
+    compileSdk = 37
+
+    val envProperties = Properties()
+    val envFile = project.rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile.inputStream().use { envProperties.load(it) }
+    }
+    val geminiApiKey = envProperties.getProperty("GEMINI_API_KEY") ?: ""
+    val newsApiKey = envProperties.getProperty("NEWS_API_KEY") ?: ""
 
     defaultConfig {
         applicationId = "com.mateocuello.alarmai"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -18,6 +29,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("String", "NEWS_API_KEY", "\"$newsApiKey\"")
     }
 
     buildTypes {
@@ -39,9 +52,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.11" // Matches Kotlin 1.9.23
     }
     packaging {
         resources {
