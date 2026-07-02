@@ -273,10 +273,8 @@ class AlarmViewModel @JvmOverloads constructor(
                         }
                     }
                 } else {
-                    Log.w("AlarmViewModel", "STT max retries reached, transitioning to ERROR")
-                    val isEs = prefs.getLanguage() == "es"
-                    _statusMessage.value = if (isEs) "No se pudo iniciar la entrada de voz." else "Could not start voice input."
-                    _uiState.value = AlarmState.ERROR
+                    Log.w("AlarmViewModel", "STT max retries reached, waiting for manual text input.")
+                    // Fallback to manual text input without showing error screen
                 }
             },
             onRmsChanged = { rmsdB: Float ->
