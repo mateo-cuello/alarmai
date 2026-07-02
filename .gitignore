@@ -1,22 +1,41 @@
+# Gradle files
+.gradle/
+build/
+app/build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# IntelliJ / Android Studio
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/tasks.xml
-/.idea/assetWizardSettings.xml
+*.iws
+
+# OS-specific
 .DS_Store
-*.iml
-.gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/tasks.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
+Thumbs.db
+
+# Log files
+*.log
+logcat.txt
+
+# Environment variables
+.env
+
+# Kotlin
+.kotlin/
+
+# Captures
 /captures
+
+# Screen recordings / media
+*.webm
+*.mp4
+
+# Python scripts
+*.pyc
+__pycache__/
+
+# Native
 .externalNativeBuild
 .cxx
-local.properties
-.env
-app/build
-.kotlin/
