@@ -120,10 +120,7 @@ class VoiceManager(
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                Log.d("VoiceManager", "Audio focus lost transiently")
-                stopSpeaking()
-                stopListening()
-                onSessionInterrupted?.invoke()
+                Log.d("VoiceManager", "Audio focus lost transiently, ignoring to preserve STT")
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
                 Log.d("VoiceManager", "Audio focus gained")
@@ -132,7 +129,7 @@ class VoiceManager(
     }
 
     private val focusRequest: AudioFocusRequest by lazy {
-        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_ASSISTANT)
