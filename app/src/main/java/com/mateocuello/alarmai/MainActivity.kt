@@ -77,6 +77,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.reloadAlarm()
+        viewModel.fetchLocation()
     }
 }
 
@@ -116,6 +117,10 @@ fun MainScreen(viewModel: MainViewModel) {
         val calendarGranted = permissions[android.Manifest.permission.READ_CALENDAR] ?: false
         val audioGranted = permissions[android.Manifest.permission.RECORD_AUDIO] ?: false
         val locationGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+
+        if (locationGranted) {
+            viewModel.fetchLocation()
+        }
 
         if (!calendarGranted || !audioGranted || !locationGranted) {
             Toast.makeText(

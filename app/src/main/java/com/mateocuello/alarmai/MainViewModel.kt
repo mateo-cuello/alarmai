@@ -2,13 +2,17 @@ package com.mateocuello.alarmai
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.mateocuello.alarmai.data.local.PreferencesManager
 import com.mateocuello.alarmai.data.model.Alarm
+import com.mateocuello.alarmai.data.repository.LocationProvider
 import com.mateocuello.alarmai.receiver.AlarmScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private val locationProvider = LocationProvider(application)
     private val prefs = PreferencesManager(application)
     private val scheduler = AlarmScheduler(application)
 
@@ -139,6 +143,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun saveTonePreference(tone: String) {
         prefs.saveTonePreference(tone)
         _tonePreference.value = tone
+    }
+
+    fun fetchLocation() {
+        viewModelScope.launch {
+            val location = locationProvider.getCurrentLocation()
+            if (location != null) {
+                prefs.saveLocation(location.first, location.second)
+            }
+        }
     }
 
     override fun onCleared() {

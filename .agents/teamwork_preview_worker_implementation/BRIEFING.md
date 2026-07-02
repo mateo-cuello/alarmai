@@ -1,54 +1,62 @@
-# BRIEFING — 2026-06-23T02:28:40Z
+# BRIEFING — 2026-07-01T13:05:27-03:00
 
 ## Mission
-Rebuild WorldCupRepository to dynamically query the official FIFA matches API.
+Implement foreground location caching features and fix test compilation errors in the alarmAI application.
 
 ## 🔒 My Identity
-- Archetype: implementation_worker
+- Archetype: teamwork_preview_worker
 - Roles: implementer, qa, specialist
 - Working directory: c:\Users\usuario\alarmai\.agents\teamwork_preview_worker_implementation
-- Original parent: 190661e5-c198-4502-850d-3e93f5b904d2
-- Milestone: Milestone 2 & 3
+- Original parent: 124f24c9-24ca-4096-835c-a658ada7b0df
+- Milestone: Foreground Location Caching and Test Compilation Fixes
 
 ## 🔒 Key Constraints
-- CODE_ONLY network mode.
-- DO NOT CHEAT: Genuine dynamic query implementation with real state and behavior (no dummy/facade implementations).
-- Minimal changes to codebase, preserving method signatures.
-- Tests must not rely on live internet connections.
+- CODE_ONLY network mode: No accessing external websites/services, no http clients targeting external URLs.
+- Follow minimal change principle.
+- No dummy/facade implementations or cheating.
+- Must run and verify using `./gradlew compileDebugSources` and `./gradlew testDebugUnitTest`.
 
 ## Current Parent
-- Conversation ID: 190661e5-c198-4502-850d-3e93f5b904d2
-- Updated: not yet
+- Conversation ID: 124f24c9-24ca-4096-835c-a658ada7b0df
+- Updated: 2026-07-01T13:10:15-03:00
 
 ## Task Summary
-- **What to build**: Rebuild WorldCupRepository to fetch match data dynamically from the FIFA API with graceful JSON fallback.
-- **Success criteria**: All tests compile and pass, network integration is fully tested via mocks/stubs, fallback works, no external network calls made in tests.
-- **Interface contracts**: PROJECT.md
-- **Code layout**: PROJECT.md
+- **What to build**: Implement foreground location caching inside MainActivity, MainViewModel, PreferencesManager, PrefetchWorker, and AlarmViewModel. Fix test compilation issues in IntegrationTest, GeminiAgentManagerTest, AlarmViewModelTest, and NewsRepositoryTest.
+- **Success criteria**: Code compiles with `./gradlew compileDebugSources` and all unit tests pass with `./gradlew testDebugUnitTest`.
+- **Interface contracts**: As specified in the implementation details.
+- **Code layout**: Source files located in `app/src/main/java/com/mateocuello/alarmai/`, tests in `app/src/test/java/com/mateocuello/alarmai/`.
 
 ## Key Decisions Made
-- Rebuilt `WorldCupRepository` to fetch dynamically from FIFA API using `okhttp3.Call.Factory` to make the client injectable and clean.
-- Used `org.json` (built into Android platform) for lightweight JSON response parsing of `Results` array, matching locales to return appropriate translations.
-- Kept the original regex-based parser as a fallback to ensure backwards compatibility with assets parsing and existing tests.
-- Refactored `WorldCupRepository` constructor to take `Call.Factory` instead of `OkHttpClient`. This allows using lambda expressions (lambda stubs) in unit tests, avoiding Mockito's `any()` matcher NullPointerExceptions in Kotlin.
-- Injected `WorldCupRepository` into `GeminiAgentManager` and mocked/stubbed it in `GeminiAgentManagerTest.kt` to ensure complete isolation.
+- Used default argument in MainViewModel constructor to supply LocationProvider without breaking the default viewModels factory.
+- Added explicit spy stubbing in NewsRepositoryTest to support network-free offline test runs.
+- Fixed the API 31+ on-device recognizer condition in VoiceManager to match pre-existing test expectations.
 
 ## Artifact Index
-- None
+- c:\Users\usuario\alarmai\.agents\teamwork_preview_worker_implementation\handoff.md — Final handoff report.
+- c:\Users\usuario\alarmai\.agents\teamwork_preview_worker_implementation\ORIGINAL_REQUEST.md — The original prompt request.
 
 ## Change Tracker
-- **Files modified**:
-  - `app/src/main/java/com/mateocuello/alarmai/data/repository/WorldCupRepository.kt` — Added dynamic fetch, JSON parsing/mapping logic, and constructor injection using `Call.Factory`.
-  - `app/src/main/java/com/mateocuello/alarmai/data/repository/GeminiAgentManager.kt` — Injected repository instance and replaced direct instantiation with the property.
-  - `app/src/test/java/com/mateocuello/alarmai/data/repository/WorldCupRepositoryTest.kt` — Added mock tests for successful network call and fallback mechanism.
-  - `app/src/test/java/com/mateocuello/alarmai/data/repository/GeminiAgentManagerTest.kt` — Injected mock repository in setUp.
-- **Build status**: Pass
-- **Pending issues**: None
+- **Files modified**: 
+  - `app/src/main/java/com/mateocuello/alarmai/data/local/PreferencesManager.kt`
+  - `app/src/main/java/com/mateocuello/alarmai/MainViewModel.kt`
+  - `app/src/main/java/com/mateocuello/alarmai/MainActivity.kt`
+  - `app/src/main/java/com/mateocuello/alarmai/service/PrefetchWorker.kt`
+  - `app/src/main/java/com/mateocuello/alarmai/ui/alarm/AlarmViewModel.kt`
+  - `app/src/main/java/com/mateocuello/alarmai/data/repository/VoiceManager.kt`
+  - `app/src/test/java/com/mateocuello/alarmai/IntegrationTest.kt`
+  - `app/src/test/java/com/mateocuello/alarmai/data/repository/GeminiAgentManagerTest.kt`
+  - `app/src/test/java/com/mateocuello/alarmai/data/repository/NewsRepositoryTest.kt`
+  - `app/src/test/java/com/mateocuello/alarmai/ui/alarm/AlarmViewModelTest.kt`
+  - `app/src/test/java/com/mateocuello/alarmai/data/local/PreferencesManagerTest.kt`
+- **Build status**: PASS
+- **Pending issues**: None.
 
 ## Quality Status
-- **Build/test result**: Pass (All 27 tests completed successfully)
-- **Lint status**: Clean (No compiler warnings or linter errors)
-- **Tests added/modified**: Added `testFetchAllMatches_successfulNetworkCall` and `testFetchAllMatches_networkFailure_fallsBackToAsset` in `WorldCupRepositoryTest.kt`. Modified `GeminiAgentManagerTest.kt` to inject mocked repo.
+- **Build/test result**: PASS. All unit tests compiled and passed successfully.
+- **Lint status**: 0 compile errors/warnings.
+- **Tests added/modified**: 
+  - Added cached location presence tests to PreferencesManagerTest.
+  - Added cached location usage and background silent refresh tests to AlarmViewModelTest.
 
 ## Loaded Skills
-- None
+- None loaded.

@@ -105,4 +105,18 @@ class PreferencesManagerTest {
         `when`(sharedPreferences.getString(eq("news_key"), eq(""))).thenReturn("")
         assertEquals(BuildConfig.NEWS_API_KEY, preferencesManager.getNewsKey())
     }
+
+    @Test
+    fun testHasCachedLocation_bothKeysPresent_returnsTrue() {
+        `when`(sharedPreferences.contains("latitude")).thenReturn(true)
+        `when`(sharedPreferences.contains("longitude")).thenReturn(true)
+        assertEquals(true, preferencesManager.hasCachedLocation())
+    }
+
+    @Test
+    fun testHasCachedLocation_missingKeys_returnsFalse() {
+        `when`(sharedPreferences.contains("latitude")).thenReturn(false)
+        `when`(sharedPreferences.contains("longitude")).thenReturn(true)
+        assertEquals(false, preferencesManager.hasCachedLocation())
+    }
 }

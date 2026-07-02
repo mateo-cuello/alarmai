@@ -1,13 +1,15 @@
 # Progress
 
-Last visited: 2026-06-23T21:36:36-03:00
+Last visited: 2026-07-01T16:12:42Z
 
 ## Done
-- Initialized BRIEFING.md and progress.md.
+- Analysed implementation changes for location caching features in MainActivity, MainViewModel, PreferencesManager, PrefetchWorker, and AlarmViewModel.
+- Checked conformance against PROJECT.md requirements.
+- Updated BRIEFING.md.
 
 ## In Progress
-- File exploration and verification of toolchain upgrade, alarm fixes, foreground service, and env configuration.
+- Running unit tests using `./gradlew clean testDebugUnitTest --no-configuration-cache --no-daemon` to verify correctness.
 
 ## Pending
-- Run unit tests using gradlew.bat.
-- Generate handoff.md.
+- Write final review/challenge report `handoff.md`.
+- Send final completion message to the orchestrator.

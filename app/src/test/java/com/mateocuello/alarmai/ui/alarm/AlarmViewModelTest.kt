@@ -10,7 +10,6 @@ import com.mateocuello.alarmai.data.repository.LocationProvider
 import com.mateocuello.alarmai.data.repository.NewsRepository
 import com.mateocuello.alarmai.data.repository.VoiceManager
 import com.mateocuello.alarmai.data.repository.WeatherRepository
-import com.mateocuello.alarmai.data.repository.WorldCupRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -60,7 +59,6 @@ class AlarmViewModelTest {
 
     private lateinit var logMock: MockedStatic<android.util.Log>
     private lateinit var intentConstruction: MockedConstruction<Intent>
-    private lateinit var worldCupRepositoryConstruction: MockedConstruction<WorldCupRepository>
 
     private lateinit var viewModel: AlarmViewModel
 
@@ -79,9 +77,7 @@ class AlarmViewModelTest {
             whenever(mock.putExtra(any<String>(), any<String>())).thenReturn(mock)
         }
 
-        worldCupRepositoryConstruction = Mockito.mockConstruction(WorldCupRepository::class.java) { mock, _ ->
-            whenever(mock.getTodayMatchesSummary(any(), any())).thenReturn("FIFA World Cup Match Summary")
-        }
+
 
         // Default preferences stubs
         whenever(prefs.getGeminiModel()).thenReturn("gemini-1.5-flash")
@@ -113,7 +109,6 @@ class AlarmViewModelTest {
         Dispatchers.resetMain()
         logMock.close()
         intentConstruction.close()
-        worldCupRepositoryConstruction.close()
     }
 
     @Test
@@ -137,7 +132,7 @@ class AlarmViewModelTest {
         whenever(weatherRepository.getWeather(eq(10.0), eq(20.0))).doReturn("Clear sky, 20C")
         whenever(newsRepository.getNews(any(), any())).doReturn("News summary")
         whenever(calendarRepository.getTodayEvents()).doReturn("Events summary")
-        whenever(geminiAgentManager.startSession(any(), eq("Clear sky, 20C"), eq("News summary"), eq("Events summary"), any(), any())).doReturn("AI Greeting")
+        whenever(geminiAgentManager.startSession(any(), eq("Clear sky, 20C"), eq("News summary"), eq("Events summary"), any())).doReturn("AI Greeting")
 
         viewModel.dismissAndTalk()
         testDispatcher.scheduler.advanceUntilIdle()
@@ -145,6 +140,29 @@ class AlarmViewModelTest {
         verify(voiceManager).startSession()
         verify(voiceManager).speak(eq("AI Greeting"), any())
         assertEquals(AlarmState.SPEAKING, viewModel.uiState.value)
+    }
+
+    @Test
+    fun testDismissAndTalk_NoCache_UsesCachedLocation() = runBlocking {
+        whenever(prefs.getPrefetchedBriefing()).thenReturn(Triple("", "", 0L))
+        whenever(prefs.hasCachedLocation()).thenReturn(true)
+        whenever(prefs.getLocation()).thenReturn(Pair(15.0, 25.0))
+        whenever(weatherRepository.getWeather(eq(15.0), eq(25.0))).doReturn("Cloudy, 18C")
+        whenever(newsRepository.getNews(any(), any())).doReturn("News summary")
+        whenever(calendarRepository.getTodayEvents()).doReturn("Events summary")
+        whenever(geminiAgentManager.startSession(any(), eq("Cloudy, 18C"), eq("News summary"), eq("Events summary"), any())).doReturn("AI Greeting")
+        whenever(locationProvider.getCurrentLocation()).doReturn(Pair(16.0, 26.0))
+
+        viewModel.dismissAndTalk()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(voiceManager).startSession()
+        verify(voiceManager).speak(eq("AI Greeting"), any())
+        assertEquals(AlarmState.SPEAKING, viewModel.uiState.value)
+        // Verify that locationProvider.getCurrentLocation was called (once in init, once in background silent refresh)
+        verify(locationProvider, times(2)).getCurrentLocation()
+        // Verify that the new location got saved to cache
+        verify(prefs, atLeastOnce()).saveLocation(eq(16.0), eq(26.0))
     }
 
     @Test
@@ -169,7 +187,7 @@ class AlarmViewModelTest {
         whenever(weatherRepository.getWeather(eq(10.0), eq(20.0))).doReturn("Clear sky")
         whenever(newsRepository.getNews(any(), any())).doReturn("News summary")
         whenever(calendarRepository.getTodayEvents()).doReturn("Events summary")
-        whenever(geminiAgentManager.startSession(any(), eq("Clear sky"), eq("News summary"), eq("Events summary"), any(), any())).doReturn("Greeting")
+        whenever(geminiAgentManager.startSession(any(), eq("Clear sky"), eq("News summary"), eq("Events summary"), any())).doReturn("Greeting")
 
         viewModel.dismissAndTalk()
         testDispatcher.scheduler.advanceUntilIdle()

@@ -5,7 +5,6 @@ import android.content.res.AssetManager
 import android.util.Log
 import com.mateocuello.alarmai.data.local.PreferencesManager
 import com.mateocuello.alarmai.data.repository.GeminiAgentManager
-import com.mateocuello.alarmai.data.repository.WorldCupRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertNotNull
@@ -26,7 +25,6 @@ class IntegrationTest {
     private val context: Context = mock()
     private val assetManager: AssetManager = mock()
     private val prefs: PreferencesManager = mock()
-    private val worldCupRepository: WorldCupRepository = mock()
 
 
 
@@ -58,7 +56,7 @@ class IntegrationTest {
             org.junit.Assume.assumeTrue("Skipping real Gemini API integration test: GEMINI_API_KEY environment variable is not configured.", false)
             return@runBlocking
         }
-        val manager = GeminiAgentManager(context, prefs, worldCupRepository)
+        val manager = GeminiAgentManager(context, prefs)
         
         try {
             // Start session using the provided API key
@@ -67,7 +65,6 @@ class IntegrationTest {
                 weatherData = "Soleado, 20 grados",
                 newsData = "Noticias de tecnología y deportes",
                 calendarData = "Sin eventos",
-                worldCupData = "Ninguno",
                 modelName = "gemini-2.5-flash"
             )
 

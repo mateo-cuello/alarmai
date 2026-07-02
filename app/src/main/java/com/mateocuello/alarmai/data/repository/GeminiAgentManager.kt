@@ -68,8 +68,7 @@ class GeminiAgentManager @JvmOverloads constructor(
                 - Estilo y tono de comunicación preferido: $tone
                 
                 HERRAMIENTAS DISPONIBLES:
-                - Tienes la herramienta de búsqueda de Google (googleSearch) para buscar noticias o información actual.
-                - Usa tu herramienta de búsqueda de Google cuando el usuario pregunte por información del mundo real.
+                - Tienes la herramienta de búsqueda de Google (googleSearch) para buscar información si el usuario te hace una pregunta de seguimiento.
             """.trimIndent()
         } else {
             val dateSdf = java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", java.util.Locale.US)
@@ -89,8 +88,7 @@ class GeminiAgentManager @JvmOverloads constructor(
                 - Preferred communication style/tone: $tone
                 
                 AVAILABLE TOOLS:
-                - You have the Google Search tool (googleSearch) to search for current news or information.
-                - Use your Google Search tool when the user asks for real-world information.
+                - You have the Google Search tool (googleSearch) to search for information if the user asks a follow-up question.
             """.trimIndent()
         }
     }
@@ -122,20 +120,18 @@ class GeminiAgentManager @JvmOverloads constructor(
                     Comienza el resumen matutino.
                     - Clima: $weatherData
                     - Eventos de Calendario: $calendarData
+                    - Noticias destacadas: $newsData
                     
-                    Usa tu herramienta de búsqueda de Google (googleSearch) para buscar las noticias más recientes sobre estos temas: $newsData.
-                    
-                    Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume el clima, calendario, y los titulares más importantes de las noticias de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día. IMPORTANTE: No des un mensaje genérico de introducción antes de las noticias ni inventes datos. Da las noticias reales obtenidas de la búsqueda directamente.
+                    Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume el clima, calendario, y los titulares de noticias provistos de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día. IMPORTANTE: No des un mensaje genérico de introducción antes de las noticias ni inventes datos. Da las noticias reales obtenidas de la lista directamente.
                 """.trimIndent()
             } else {
                 """
                     Start the morning briefing.
                     - Weather: $weatherData
                     - Calendar Events: $calendarData
+                    - Top News Headlines: $newsData
                     
-                    Use your Google Search tool (googleSearch) to find the latest news headlines about these topics: $newsData.
-                    
-                    Please greet the user warmly, state the time (or wish them a good morning), summarize the weather, calendar, and the top news headlines in a highly engaging, concise way, and ask how they'd like to start their day. IMPORTANT: Do not give a generic introductory message before the news or invent facts. Deliver the real news obtained from the search directly.
+                    Please greet the user warmly, state the time (or wish them a good morning), summarize the weather, calendar, and the provided news headlines in a highly engaging, concise way, and ask how they'd like to start their day. IMPORTANT: Do not give a generic introductory message before the news or invent facts. Deliver the real news obtained from the list directly.
                 """.trimIndent()
             }
 

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
+import kotlinx.coroutines.withTimeoutOrNull
 
 enum class AlarmState {
     RINGING,
@@ -51,6 +52,7 @@ class AlarmViewModel @JvmOverloads constructor(
 
     private var noSpeechTimeoutJob: kotlinx.coroutines.Job? = null
     private var consecutiveSttErrors = 0
+    private var wasCachedLocationUsed: Boolean = false
 
     private val _geminiModelName = MutableStateFlow(prefs.getGeminiModel())
     val geminiModelName: StateFlow<String> = _geminiModelName
@@ -109,6 +111,7 @@ class AlarmViewModel @JvmOverloads constructor(
     val micVolume: StateFlow<Float> = _micVolume
 
     fun dismissAndTalk() {
+        wasCachedLocationUsed = false
         viewModelScope.launch {
             try {
                 // 1. Stop the alarm service ringtone
@@ -145,9 +148,15 @@ class AlarmViewModel @JvmOverloads constructor(
                     _statusMessage.value = if (isEs) "Detectando ubicación..." else "Detecting location..."
                     
                     // Get location coordinates (either pre-fetched or fetch on demand)
-                    val (lat, lon) = prefetchedLocation
-                        ?: locationProvider.getCurrentLocation()?.also { prefs.saveLocation(it.first, it.second) }
-                        ?: prefs.getLocation()
+                    val (lat, lon) = if (prefs.hasCachedLocation()) {
+                        wasCachedLocationUsed = true
+                        prefs.getLocation()
+                    } else {
+                        wasCachedLocationUsed = false
+                        val location = withTimeoutOrNull(3000) { locationProvider.getCurrentLocation() }
+                        location?.also { prefs.saveLocation(it.first, it.second) }
+                            ?: prefs.getLocation()
+                    }
                     
                     val newsTopics = prefs.getNewsTopics()
                     val language = prefs.getLanguage()
@@ -212,6 +221,20 @@ class AlarmViewModel @JvmOverloads constructor(
         _userSpeech.value = ""
         _micVolume.value = 0f
         
+        if (wasCachedLocationUsed) {
+            wasCachedLocationUsed = false
+            viewModelScope.launch {
+                try {
+                    val location = locationProvider.getCurrentLocation()
+                    if (location != null) {
+                        prefs.saveLocation(location.first, location.second)
+                    }
+                } catch (e: Exception) {
+                    Log.e("AlarmViewModel", "Error silently refreshing location: ${e.localizedMessage}")
+                }
+            }
+        }
+        
         voiceManager.speak(text) {
             // Callback when agent finishes speaking: add delay to let TTS fully release audio
             viewModelScope.launch {
@@ -229,15 +252,15 @@ class AlarmViewModel @JvmOverloads constructor(
         startNoSpeechTimeout()
         
         voiceManager.startListening(
-            onResult = { result ->
+            onResult = { result: String ->
                 cancelNoSpeechTimeout()
                 consecutiveSttErrors = 0 // Reset on success
                 _userSpeech.value = result
                 _micVolume.value = 0f
                 processUserSpeech(result)
             },
-            onError = { error ->
-                Log.e("AlarmViewModel", "STT Error ($consecutiveSttErrors): $error")
+            onError = { errorMsg: String ->
+                Log.e("AlarmViewModel", "STT Error ($consecutiveSttErrors): $errorMsg")
                 _micVolume.value = 0f
                 consecutiveSttErrors++
                 if (consecutiveSttErrors < 5 && _uiState.value == AlarmState.LISTENING) {
@@ -256,7 +279,7 @@ class AlarmViewModel @JvmOverloads constructor(
                     _uiState.value = AlarmState.ERROR
                 }
             },
-            onRmsChanged = { rmsdB ->
+            onRmsChanged = { rmsdB: Float ->
                 _micVolume.value = rmsdB
             }
         )

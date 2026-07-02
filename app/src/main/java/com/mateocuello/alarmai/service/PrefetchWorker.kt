@@ -15,6 +15,7 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
 
 class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
@@ -34,12 +35,13 @@ class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWork
         
         // 1. Fetch Location
         val locationProvider = LocationProvider(context)
-        val location = locationProvider.getCurrentLocation()
-        val (lat, lon) = if (location != null) {
-            prefs.saveLocation(location.first, location.second)
-            location
-        } else {
+        val (lat, lon) = if (prefs.hasCachedLocation()) {
             prefs.getLocation()
+        } else {
+            val location = withTimeoutOrNull(3000) { locationProvider.getCurrentLocation() }
+            location?.also {
+                prefs.saveLocation(it.first, it.second)
+            } ?: prefs.getLocation()
         }
 
         val weatherRepository = WeatherRepository()

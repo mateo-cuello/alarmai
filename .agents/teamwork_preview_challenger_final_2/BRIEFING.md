@@ -1,51 +1,44 @@
-# BRIEFING — 2026-06-24T00:41:00Z
+# BRIEFING — 2026-07-01T13:16:00-03:00
 
 ## Mission
-Verify build, tests, and Git ignore status of .env in alarmai repository.
+Verify correctness of location caching implementation including UI lifecycle saving, PrefetchWorker/AlarmViewModel cache fallback, and background TTS refresh.
 
 ## 🔒 My Identity
-- Archetype: EMPIRICAL CHALLENGER
+- Archetype: empirical challenger
 - Roles: critic, specialist
 - Working directory: c:\Users\usuario\alarmai\.agents\teamwork_preview_challenger_final_2
-- Original parent: 6688730c-1aaf-4145-827f-23ab61654b01
-- Milestone: Verification and Handoff
+- Original parent: 124f24c9-24ca-4096-835c-a658ada7b0df
+- Milestone: Location Caching Verification
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Run build command `.\gradlew.bat clean assembleDebug`
-- Run test command `.\gradlew.bat test`
-- Verify `.env` is properly ignored by Git
-- Write handoff.md to `c:\Users\usuario\alarmai\.agents\teamwork_preview_challenger_final_2\handoff.md`
 
 ## Current Parent
-- Conversation ID: 6688730c-1aaf-4145-827f-23ab61654b01
-- Updated: 2026-06-24T00:41:00Z
+- Conversation ID: 124f24c9-24ca-4096-835c-a658ada7b0df
+- Updated: not yet
 
 ## Review Scope
-- **Files to review**: .gitignore, build configuration, tests
-- **Interface contracts**: PROJECT.md or similar if present
-- **Review criteria**: Build success, test pass rate, Git status of .env
+- **Files to review**: MainActivity.kt, PrefetchWorker.kt, AlarmViewModel.kt, PreferencesManager.kt, and associated tests
+- **Interface contracts**: PROJECT.md / SCOPE.md
+- **Review criteria**: correctness of location caching implementation and test coverage
 
 ## Key Decisions Made
-- Checked `.env` ignore status using `git check-ignore` and `git status --ignored --porcelain`.
-- Attempted to build debug APK via `.\gradlew.bat clean assembleDebug`.
-- Attempted to run unit tests via `.\gradlew.bat test`.
-- Identified and logged compile-time resource and Kotlin daemon/compilation failures.
-
-## Artifact Index
-- c:\Users\usuario\alarmai\.agents\teamwork_preview_challenger_final_2\handoff.md — Final handoff report containing observations, logic chain, caveats, conclusion, and verification method.
-- c:\Users\usuario\alarmai\.agents\teamwork_preview_challenger_final_2\challenge_report.md — Challenge report containing adversarial review, stress test results, and risk assessment.
+- Confirmed that the location caching logic is correctly implemented according to specifications.
+- Identified that the build is currently broken due to a Gradle/Kotlin configuration error where the Kotlin compiler cannot resolve `BuildConfig` in `PreferencesManager.kt` because of an invalid Java source root path.
 
 ## Attack Surface
-- **Hypotheses tested**: 
-  - Hypothesis: Project builds cleanly. Status: Rejected. Multiple resource compiler/merge failures and parseDebugLocalResources failures occur.
-  - Hypothesis: Unit tests compile and pass. Status: Rejected. Compile tasks crash due to Kotlin daemon issues and FileNotFoundException for shrunk-classpath-snapshot.bin.
-  - Hypothesis: `.env` is properly ignored by Git. Status: Confirmed. Git check-ignore outputs line 13 match, and git status shows `!! .env`.
+- **Hypotheses tested**:
+  - Location is fetched and saved in MainActivity lifecycle (`onResume` and on permission granted): **Verified**
+  - Location fallback (Cache -> Live GPS -> Default Coords) is implemented in PrefetchWorker and AlarmViewModel: **Verified**
+  - Background silent refresh coroutine is launched concurrently before TTS playback starts: **Verified**
 - **Vulnerabilities found**:
-  - Compiler failures prevent the project from building or running tests.
+  - Compilation failure in Gradle prevents unit tests from running: `PreferencesManager.kt` fails to compile because the compiler warns `Java source root points to a non-existent location: .../BuildConfig.java` (it's looking for a folder but given a file path) and throws `unresolved reference 'BuildConfig'`. This cascades into `PreferencesManager` being unresolved in `VoiceManager.kt` as `Unresolved reference 'local'`.
 - **Untested angles**:
-  - The actual runtime behavior of unit tests could not be stress-tested or evaluated due to compilation blocking.
+  - Live execution of tests on physical/emulator devices due to compilation failure.
 
 ## Loaded Skills
-- None loaded.
+- None
+
+## Artifact Index
+- c:\Users\usuario\alarmai\.agents\teamwork_preview_challenger_final_2\handoff.md — Handoff/Verification Report

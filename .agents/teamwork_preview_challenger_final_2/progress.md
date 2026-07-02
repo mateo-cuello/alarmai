@@ -1,10 +1,13 @@
-# Progress Log
+# Progress
 
-Last visited: 2026-06-24T00:41:20Z
+- Last visited: 2026-07-01T13:15:00-03:00
 
-- [x] Initialized workspace and briefing
-- [x] Verify build via `.\gradlew.bat clean assembleDebug` (FAILED: mergeDebugResources and parseDebugLocalResources failed)
-- [x] Verify unit tests via `.\gradlew.bat test` (FAILED: compileReleaseKotlin/compileDebugKotlin failed due to Kotlin daemon issues)
-- [x] Verify Git ignore status of `.env` (PASSED: Ignored at line 13 of `.gitignore`)
-- [x] Generate adversarial stress-testing challenge report / analysis
-- [x] Write handoff.md and send message to parent agent
+## Verification Tasks
+- [x] Investigate MainActivity.kt location request and save to preferences. (Verified)
+- [x] Investigate PrefetchWorker.kt location fallback logic. (Verified)
+- [x] Investigate AlarmViewModel.kt location fallback logic. (Verified)
+- [x] Investigate AlarmViewModel.kt background location refresh before/during TTS playback. (Verified)
+- [x] Find and analyze unit tests (AlarmViewModelTest.kt, PreferencesManagerTest.kt, etc.). (Analyzed)
+- [x] Run `./gradlew testDebugUnitTest` and check results. (Failed due to Gradle/Kotlin build classpath issue resolving BuildConfig)
+- [x] Perform stress testing & adversarial review (find failure modes/bugs). (Completed)
+- [x] Write handoff.md. (In progress)

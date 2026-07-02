@@ -104,6 +104,11 @@ class PreferencesManager(context: Context) {
             .apply()
     }
 
+    fun hasCachedLocation(): Boolean {
+        return prefs.contains(KEY_LAT) && prefs.contains(KEY_LON)
+    }
+
+
     fun getLocation(): Pair<Double, Double> {
         val lat = prefs.getFloat(KEY_LAT, -34.6037f).toDouble()
         val lon = prefs.getFloat(KEY_LON, -58.3816f).toDouble()

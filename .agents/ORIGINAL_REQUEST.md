@@ -125,3 +125,54 @@ Remove or simplify the `canScheduleExactAlarms()` runtime check and settings red
 ### Security
 - [ ] No API keys or sensitive credentials present in source code
 
+
+## Follow-up — 2026-07-01T16:01:05Z
+
+Implement a foreground location caching system in the AlarmAI Android app so the assistant can instantly access the latest known location for weather forecasts without blocking the morning alarm flow.
+
+Working directory: c:\Users\usuario\alarmai
+Integrity mode: benchmark
+
+## Requirements
+
+### R1. Foreground Location Tracking
+The app must fetch and cache the user's location into `PreferencesManager` exclusively when the user opens the application (e.g. within MainActivity). It should not run continuous background services or WorkManager jobs specifically for location to save battery.
+
+### R2. Smart Alarm Fallback and Refresh
+- If a cached location is available, `AlarmViewModel` and `PrefetchWorker` must use it instantly.
+- If no cached location exists, they must fall back to a live GPS fetch to ensure weather data is always retrieved.
+- When the cached location is used, the system must trigger a live background location fetch to refresh the cache specifically *while* the Text-To-Speech (TTS) engine is reading the briefing, ensuring the user experiences zero delay.
+
+## Acceptance Criteria
+
+### Verification
+- [ ] Code inspection confirms location is requested and saved to preferences in the UI lifecycle (e.g. `MainActivity`).
+- [ ] `PrefetchWorker` and `AlarmViewModel` correctly implement the fallback logic (Cache -> Live GPS).
+- [ ] A background coroutine is launched during or immediately before the TTS playback starts to refresh the location cache silently.
+- [ ] The app builds successfully (`./gradlew assembleDebug`).
+
+## Follow-up — 2026-07-01T16:03:15Z
+
+Investigar y solucionar el problema de fallo instantáneo del Speech-to-Text (SST) al usar `SpeechRecognizer` en la aplicación AlarmAI, que ocurre tanto en la pantalla de bloqueo como con el dispositivo desbloqueado en Android 14.
+
+Working directory: c:/Users/usuario/alarmai
+Integrity mode: development
+
+## Requirements
+
+### R1. Diagnóstico del Error de SpeechRecognizer
+El agente debe identificar la causa raíz del fallo instantáneo de `SpeechRecognizer` (que dispara la pantalla "No se pudo iniciar la entrada de voz"). 
+*Información crucial proporcionada por el usuario:* El indicador de privacidad del micrófono (luz verde en la esquina superior derecha de la pantalla) **se enciende por un segundo** antes de que salte la pantalla de error. Esto significa que el permiso SÍ se otorga y el `SpeechRecognizer` llega a abrirse, pero luego se cancela o falla inmediatamente (posiblemente un error de nuestro lado, un timeout inmediato por configuración de audio focus, o una cancelación accidental en la lógica de la UI/ViewModel).
+
+### R2. Implementación de una Solución Robusta y Fluida
+El agente debe implementar la solución más fluida (seamless) para el usuario que arregle este error. La implementación debe asegurar que:
+- El reconocimiento de voz inicie y mantenga la escucha de forma confiable, evitando cancelaciones prematuras.
+- Se debe revisar la lógica de Focus de Audio y de ciclo de vida en `VoiceManager` y `AlarmViewModel` para evitar que el reconocimiento se interrumpa a sí mismo.
+- No se debe comprometer la calidad ni el diseño de las funcionalidades existentes.
+
+## Acceptance Criteria
+
+### Solución del Crash / Fallo Instantáneo
+- [ ] La aplicación ya no debe mostrar la pantalla de error "No se pudo iniciar la entrada de voz" de manera instantánea al intentar escuchar al usuario.
+- [ ] El `SpeechRecognizer` debe mantenerse activo y captar el audio correctamente (indicado visualmente o en los logs por un cambio en el volumen RMS o por recibir resultados completos).
+- [ ] La solución debe compilar y ejecutarse correctamente sin introducir excepciones no manejadas.

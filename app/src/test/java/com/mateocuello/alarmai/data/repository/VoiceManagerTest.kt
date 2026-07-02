@@ -406,8 +406,8 @@ class VoiceManagerTest {
     }
 
     @Test
-    fun testOnDeviceRecognizerSelectedOnApi31PlusWhenAvailable() {
-        VoiceManager.sdkVersionProvider = { 31 }
+    fun testOnDeviceRecognizerSelectedOnApi33PlusWhenAvailable() {
+        VoiceManager.sdkVersionProvider = { 33 }
         srMockStatic.`when`<Boolean> { SpeechRecognizer.isRecognitionAvailable(any()) }.thenReturn(true)
         srMockStatic.`when`<Boolean> { SpeechRecognizer.isOnDeviceRecognitionAvailable(any()) }.thenReturn(true)
         
@@ -427,8 +427,8 @@ class VoiceManagerTest {
     }
 
     @Test
-    fun testFallbackToStandardRecognizerOnApi31PlusWhenOnDeviceUnavailable() {
-        VoiceManager.sdkVersionProvider = { 31 }
+    fun testFallbackToStandardRecognizerOnApi33PlusWhenOnDeviceUnavailable() {
+        VoiceManager.sdkVersionProvider = { 33 }
         srMockStatic.`when`<Boolean> { SpeechRecognizer.isRecognitionAvailable(any()) }.thenReturn(true)
         srMockStatic.`when`<Boolean> { SpeechRecognizer.isOnDeviceRecognitionAvailable(any()) }.thenReturn(false)
         
@@ -449,7 +449,7 @@ class VoiceManagerTest {
 
     @Test
     fun testFallbackToStandardRecognizerOnOlderApis() {
-        VoiceManager.sdkVersionProvider = { 30 }
+        VoiceManager.sdkVersionProvider = { 32 }
         srMockStatic.`when`<Boolean> { SpeechRecognizer.isRecognitionAvailable(any()) }.thenReturn(true)
         
         val mockStandardRecognizer = mock<SpeechRecognizer>()

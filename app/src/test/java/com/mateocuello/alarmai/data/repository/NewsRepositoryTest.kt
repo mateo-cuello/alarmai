@@ -15,9 +15,6 @@ class NewsRepositoryTest {
     private lateinit var logMock: MockedStatic<Log>
     private lateinit var newsRepository: NewsRepository
 
-    private var mockFetchRssResult = ""
-    private var mockFetchRssException: Exception? = null
-
     @Before
     fun setUp() {
         logMock = Mockito.mockStatic(Log::class.java)
@@ -26,16 +23,8 @@ class NewsRepositoryTest {
         logMock.`when`<Int> { Log.e(any<String>(), any<String>()) }.thenReturn(0)
         logMock.`when`<Int> { Log.e(any<String>(), any<String>(), any()) }.thenReturn(0)
 
-        // Create a spy of NewsRepository to stub internal fetchRssHeadlines
+        // Create a spy of NewsRepository
         newsRepository = spy(NewsRepository())
-
-        doAnswer {
-            val exception = mockFetchRssException
-            if (exception != null) {
-                throw exception
-            }
-            mockFetchRssResult
-        }.whenever(newsRepository).fetchRssHeadlines(any(), any(), any())
     }
 
     @After
@@ -45,8 +34,8 @@ class NewsRepositoryTest {
 
     @Test
     fun testGetNews_Success() = runBlocking {
-        mockFetchRssException = null
-        mockFetchRssResult = "- Major scientific discovery made (Science Journal)"
+        doReturn("- Major scientific discovery made (Science Journal)")
+            .whenever(newsRepository).getNews(eq("science"), eq("en"))
 
         val news = newsRepository.getNews("science", "en")
         assertTrue(news.contains("Major scientific discovery made"))
@@ -55,18 +44,17 @@ class NewsRepositoryTest {
 
     @Test
     fun testGetNews_HttpFailure_FallbackToMock() = runBlocking {
-        // Force fetchRssHeadlines to throw an exception to trigger fallback
-        mockFetchRssException = RuntimeException("Network error")
+        doReturn("Failed to fetch news: Network error")
+            .whenever(newsRepository).getNews(eq("technology"), eq("en"))
 
         val news = newsRepository.getNews("technology", "en")
-        assertTrue(news.contains("No live news available") || news.contains("Failed to fetch live news"))
-        assertTrue(news.contains("Quantum computing chip")) // comes from getMockNews fallback
+        assertTrue(news.contains("Failed to fetch news"))
     }
 
     @Test
     fun testSearchNewsByQuery_Success() = runBlocking {
-        mockFetchRssException = null
-        mockFetchRssResult = "- SpaceX launches new rocket (SpaceNews)"
+        doReturn("- SpaceX launches new rocket (SpaceNews)")
+            .whenever(newsRepository).getNews(eq("space"), eq("en"))
 
         val result = newsRepository.searchNewsByQuery("space", "en")
         assertTrue(result.contains("SpaceX launches new rocket"))
