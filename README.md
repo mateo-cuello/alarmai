@@ -30,7 +30,7 @@ When the alarm fires, it launches a full-screen window. Upon dismissal, the app 
 
 ### 1. Import the Project
 1. Open Android Studio.
-2. Select **File > Open** and open `C:\Users\usuario\alarmai`.
+2. Select **File > Open** and open `..\alarmai`.
 3. Wait for the Gradle sync to complete.
 
 ### 2. Configure Settings & Run

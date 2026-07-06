@@ -221,19 +221,7 @@ fun AlarmScreenContent(
                 }
             }
 
-            // Footer
-            val displayName = when (geminiModelName) {
-                "gemini-2.5-flash" -> "Gemini 2.5 Flash"
-                "gemini-3.5-flash" -> "Gemini 3.5 Flash"
-                "gemini-3.1-flash-lite" -> "Gemini 3.1 Flash"
-                else -> "Gemini"
-            }
-            Text(
-                text = "Powered by $displayName",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.3f),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+
         }
     }
 }

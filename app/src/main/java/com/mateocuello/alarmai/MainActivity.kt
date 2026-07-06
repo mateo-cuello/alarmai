@@ -583,12 +583,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 3
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Note: The AI agent can modify this text box dynamically if you request a tone change during the chat.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.7f)
-                )
+
             }
         }
 

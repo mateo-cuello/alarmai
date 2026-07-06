@@ -40,9 +40,17 @@ class GeminiAgentManager @JvmOverloads constructor(
 
     class CustomChatSession(
         val apiKey: String,
-        val modelName: String,
+        var modelName: String,
         val systemInstructionText: String,
         val history: MutableList<Content> = mutableListOf()
+    )
+
+    private val FALLBACK_MODELS = listOf(
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-3.0-flash",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite"
     )
 
     private var chatSession: CustomChatSession? = null
@@ -98,7 +106,7 @@ class GeminiAgentManager @JvmOverloads constructor(
         weatherData: String,
         newsData: String,
         calendarData: String,
-        modelName: String = "gemini-2.5-flash"
+        modelName: String = FALLBACK_MODELS.first()
     ): String = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             val language = prefs.getLanguage()
@@ -229,16 +237,36 @@ class GeminiAgentManager @JvmOverloads constructor(
     }
 
     private suspend fun callGeminiAndHandleFunctions(session: CustomChatSession): Content {
-        val url = "https://generativelanguage.googleapis.com/v1beta/models/${session.modelName}:generateContent?key=${session.apiKey}"
+        var lastException: Exception? = null
 
-        val requestBody = buildRequestBody(session.history, session.systemInstructionText)
-        val responseJson = makePostRequest(url, requestBody.toString())
-        val responseContent = parseResponseContent(responseJson) ?: throw Exception("Failed to parse response")
+        val startIndex = FALLBACK_MODELS.indexOf(session.modelName).takeIf { it >= 0 } ?: 0
 
-        // Add the model's response to history
-        session.history.add(responseContent)
+        for (i in startIndex until FALLBACK_MODELS.size) {
+            val currentModel = FALLBACK_MODELS[i]
+            session.modelName = currentModel
+            val url = "https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${session.apiKey}"
+            val requestBody = buildRequestBody(session.history, session.systemInstructionText)
+            
+            try {
+                val responseJson = makePostRequest(url, requestBody.toString())
+                val responseContent = parseResponseContent(responseJson) ?: throw Exception("Failed to parse response")
+                
+                // Add the model's response to history
+                session.history.add(responseContent)
+                return responseContent
+            } catch (e: Exception) {
+                lastException = e
+                val msg = e.message ?: ""
+                if (msg.contains("429") || msg.contains("503") || msg.contains("quota", ignoreCase = true) || msg.contains("exhausted", ignoreCase = true)) {
+                    // Try next fallback model
+                    continue
+                } else {
+                    throw e
+                }
+            }
+        }
 
-        return responseContent
+        throw Exception("Todos los modelos fallaron. Último error: ${lastException?.message}")
     }
 
     internal fun contentToJson(content: Content): JSONObject {
@@ -363,16 +391,17 @@ class GeminiAgentManager @JvmOverloads constructor(
         client.newCall(request).execute().use { response ->
             val errBody = response.body?.string() ?: ""
             if (!response.isSuccessful) {
-                var errMsg = "HTTP ${response.code}"
+                val httpCode = response.code
+                var errMsg = "HTTP $httpCode"
                 try {
                     val errJson = JSONObject(errBody)
                     val errorObj = errJson.optJSONObject("error")
                     if (errorObj != null) {
-                        errMsg = errorObj.optString("message", errMsg)
+                        errMsg = "HTTP $httpCode: " + errorObj.optString("message", errMsg)
                     }
                 } catch (e: Exception) {
                     if (errBody.isNotBlank()) {
-                        errMsg = errBody
+                        errMsg = "HTTP $httpCode: $errBody"
                     }
                 }
                 throw Exception(errMsg)
