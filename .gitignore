@@ -27,10 +27,27 @@ logcat.txt
 
 # Captures
 /captures
+captures/
 
 # Screen recordings / media
 *.webm
 *.mp4
+*.mov
+*.mkv
+
+# Build outputs
+*.apk
+*.aab
+*.hprof
+
+# Signing
+*.jks
+*.keystore
+keystore.properties
+
+# Agent / tool scratch
+.agents/
+.claude/settings.local.json
 
 # Python scripts
 *.pyc

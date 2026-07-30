@@ -8,6 +8,3 @@
 -keepclassmembers class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
-
-# Keep Gemini SDK components if needed
--keep class com.google.ai.client.generativeai.** { *; }

@@ -3,12 +3,13 @@
     <style name="Theme.AlarmAI" parent="android:Theme.DeviceDefault.NoActionBar">
         <!-- Customize your theme here. -->
     </style>
-    
+
+    <!-- android:showWhenLocked / android:turnScreenOn are API 27+ theme attributes, so they live
+         in the values-v27 copy of this style. AlarmActivity declares both in the manifest as well,
+         which is what carries the lockscreen behaviour on API 26. -->
     <style name="Theme.AlarmAI.Fullscreen" parent="Theme.AlarmAI">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:showWhenLocked">true</item>
-        <item name="android:turnScreenOn">true</item>
     </style>
 </resources>

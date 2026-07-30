@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.mateocuello.alarmai"
+    namespace = "com.alarmai.app"
     compileSdk = 37
 
     val envProperties = Properties()
@@ -16,10 +16,9 @@ android {
         envFile.inputStream().use { envProperties.load(it) }
     }
     val geminiApiKey = envProperties.getProperty("GEMINI_API_KEY") ?: ""
-    val newsApiKey = envProperties.getProperty("NEWS_API_KEY") ?: ""
 
     defaultConfig {
-        applicationId = "com.mateocuello.alarmai"
+        applicationId = "com.alarmai.app"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
@@ -30,7 +29,6 @@ android {
             useSupportLibrary = true
         }
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
-        buildConfigField("String", "NEWS_API_KEY", "\"$newsApiKey\"")
     }
 
     buildTypes {
@@ -82,6 +80,10 @@ dependencies {
     // Network & Data
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
+    // Declared explicitly: GeminiAgentManager uses the OkHttp 4 Kotlin extensions directly, and
+    // without this it is only on the classpath because okhttp-logging 4.12.0 out-votes the
+    // okhttp 3.14.9 that Retrofit 2.9.0 pulls in transitively.
+    implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.play.services.location)
     implementation(libs.androidx.datastore.preferences)
