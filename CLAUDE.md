@@ -47,7 +47,7 @@ Component map:
 
 | Area | Classes |
 | --- | --- |
-| UI | `MainActivity`/`MainViewModel` (settings, permissions, scheduling), `AlarmActivity`/`AlarmViewModel` (lockscreen wake-up, briefing, voice dialogue), `ui/theme` (dark scheme + glassmorphic layouts) |
+| UI | `MainActivity`/`MainViewModel` (settings, permissions, scheduling), `AlarmActivity`/`AlarmViewModel` (lockscreen wake-up, briefing, voice dialogue), `ui/theme` (`Color`/`Type`/`Theme` tokens + `Components.kt` shared widgets) |
 | Scheduling | `AlarmScheduler`, `AlarmTimeCalculator`, `AlarmReceiver`, `PreAlarmReceiver`, `BootReceiver` |
 | Background | `AlarmService` (ringtone foreground service), `PrefetchWorker` (WorkManager briefing prefetch) |
 | Data | `PreferencesManager`, `LocationProvider`, `WeatherRepository`, `NewsRepository`, `CalendarRepository`, `VoiceManager`, `GeminiAgentManager`, `data/model` (`Alarm`, `GeminiModels`) |
@@ -106,7 +106,17 @@ Model IDs live in one place: `data/model/GeminiModels.kt` (`CHAIN`, `DEFAULT` = 
 
 ### Compose UI
 
-Both activities call `enableEdgeToEdge()` and the screen roots use `Modifier.safeDrawingPadding()` (plus `.imePadding()` on the chat input). At `targetSdk` 37 edge-to-edge is enforced and cannot be opted out of, so anything drawn without inset padding lands under the status bar or the gesture nav bar. `Theme.kt` intentionally sets no `window.statusBarColor` — it is a deprecated no-op from API 35 and `enableEdgeToEdge()` owns the system bar treatment.
+Both activities call `enableEdgeToEdge()` and the screen roots use `Modifier.safeDrawingPadding()` (plus `.imePadding()` wherever there is a text field). At `targetSdk` 37 edge-to-edge is enforced and cannot be opted out of, so anything drawn without inset padding lands under the status bar or the gesture nav bar. `Theme.kt` intentionally sets no `window.statusBarColor` — it is a deprecated no-op from API 35 and `enableEdgeToEdge()` owns the system bar treatment.
+
+The visual language is **flat minimalist dark, and deliberately has no gradients** — replacing a flat fill with a `Brush` anywhere is a regression, not a flourish. Three rules keep it coherent:
+
+- **Every colour token in `Color.kt` is opaque.** Do not reintroduce `Color.White.copy(alpha = …)` for surfaces or borders. The old screens had nine distinct white-alpha values for surfaces alone, and because they composited against whatever was behind them, the same card rendered differently on the two screens. Depth is a step up the neutral ramp (`Ink` → `Surface1` → `Surface2` → `Surface3`) separated by a 1dp `Line`; there are no shadows or elevation anywhere.
+- **One accent.** `Accent` marks the primary action and the active state, nothing decorative. `secondary` and `tertiary` in the scheme resolve to neutrals on purpose, so a Material component that reaches for them comes out grey instead of inventing a hue. `AccentSurface`/`AccentLine` are the accent pre-composited over `Ink`, which is what keeps selected fills opaque.
+- **Build from `Components.kt`**, which replaced the old `Glassmorphism.kt` (whose `glassmorphicCard()` was a no-op returning the receiver unchanged — the "glass" was really a white-alpha fill plus border, hand-repeated at five call sites that had already drifted apart). `SectionCard`, `SelectablePill`, `PrimaryButton`, `SecondaryButton`, `FieldLabel`, `FieldHint` and `appTextFieldColors()` are the vocabulary; add to that file rather than restyling inline.
+
+`Type.kt` defines every style the app uses, including `displayLarge`/`displayMedium` for the clocks, so no screen has to `.copy(fontSize = …)` a style and leave a mismatched `lineHeight` behind. Weight tops out at SemiBold — hierarchy comes from size and colour. `AlarmAITheme` takes only `content`: the light scheme was unreachable (`darkTheme` defaulted true and no caller ever passed false) and dynamic colour is off on purpose, since letting the system recolour the app would undo the neutral palette.
+
+The `day_toggle_$dayInt` test tags and the `selected` semantics on those pills are asserted by `MainActivityUiTest` — preserve them when restyling.
 
 ### Localization and prompt constraints
 

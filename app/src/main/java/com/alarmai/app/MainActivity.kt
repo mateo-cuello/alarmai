@@ -20,7 +20,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -30,7 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings as SettingsIcon
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -38,27 +36,35 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.alarmai.app.data.model.GeminiModels
 import com.alarmai.app.data.repository.VoiceManager
 import com.alarmai.app.receiver.AlarmReceiver
 import com.alarmai.app.receiver.AlarmScheduler
+import com.alarmai.app.ui.theme.Accent
 import com.alarmai.app.ui.theme.AlarmAITheme
-import com.alarmai.app.ui.theme.DarkBg
-import com.alarmai.app.ui.theme.PrimaryPurple
-import com.alarmai.app.ui.theme.SecondaryPink
-import com.alarmai.app.ui.theme.glassmorphicCard
+import com.alarmai.app.ui.theme.ControlHeight
+import com.alarmai.app.ui.theme.FieldHint
+import com.alarmai.app.ui.theme.FieldLabel
+import com.alarmai.app.ui.theme.Ink
+import com.alarmai.app.ui.theme.Line
+import com.alarmai.app.ui.theme.PrimaryButton
+import com.alarmai.app.ui.theme.SecondaryButton
+import com.alarmai.app.ui.theme.SectionCard
+import com.alarmai.app.ui.theme.SelectablePill
+import com.alarmai.app.ui.theme.Spacing
+import com.alarmai.app.ui.theme.Surface2
+import com.alarmai.app.ui.theme.Surface3
+import com.alarmai.app.ui.theme.TextPrimary
+import com.alarmai.app.ui.theme.TextSecondary
+import com.alarmai.app.ui.theme.TextTertiary
+import com.alarmai.app.ui.theme.appTextFieldColors
 
 class MainActivity : ComponentActivity() {
 
@@ -73,7 +79,7 @@ class MainActivity : ComponentActivity() {
             AlarmAITheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = DarkBg
+                    color = Ink
                 ) {
                     MainScreen(viewModel)
                 }
@@ -88,7 +94,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: MainViewModel) {
     val context = LocalContext.current
@@ -177,643 +182,343 @@ fun MainScreen(viewModel: MainViewModel) {
         checkFullScreenIntentPermission(context)
     }
 
-    val gradient = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF0B0F19), // Deep cosmic black-blue
-            Color(0xFF1E1B4B), // Deep indigo
-            Color(0xFF0F172A)  // Slate 900
-        )
-    )
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradient)
-            // Gradient stays full-bleed; content insets so the title clears the status bar and
-            // the last card clears the gesture nav bar (edge-to-edge is enforced at targetSdk 35+).
+            .background(Ink)
+            // Content insets so the title clears the status bar and the last card clears the
+            // gesture nav bar (edge-to-edge is enforced at targetSdk 35+); imePadding keeps the
+            // focused text field above the keyboard.
             .safeDrawingPadding()
+            .imePadding()
             .verticalScroll(scrollState)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = Spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Title Header
-        Text(
-            text = "AlarmAI",
-            style = MaterialTheme.typography.headlineLarge,
-            color = Color.White,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center
-        )
-
-        Text(
-            text = "Your voice-powered morning assistant",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.White.copy(alpha = 0.6f),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 4.dp, bottom = 32.dp)
-        )
-
-        // 1. Alarm Settings Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
-                .glassmorphicCard(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Alarm,
-                        contentDescription = "Alarm Settings",
-                        tint = PrimaryPurple,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Wake-Up Time",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Large Time Display
-                val formattedTime = String.format("%02d:%02d", alarm.hour, alarm.minute)
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = formattedTime,
-                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 48.sp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier
-                            .clickable {
-                                TimePickerDialog(
-                                    context,
-                                    { _, hour, minute ->
-                                        viewModel.updateAlarmTime(hour, minute)
-                                    },
-                                    alarm.hour,
-                                    alarm.minute,
-                                    true
-                                ).show()
-                            }
-                            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-
-                    Switch(
-                        checked = alarm.isActive,
-                        onCheckedChange = { viewModel.toggleAlarmActive(it) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = PrimaryPurple,
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = Color.DarkGray
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Days of Week Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val daysList = listOf(
-                        java.util.Calendar.MONDAY to "M",
-                        java.util.Calendar.TUESDAY to "T",
-                        java.util.Calendar.WEDNESDAY to "W",
-                        java.util.Calendar.THURSDAY to "T",
-                        java.util.Calendar.FRIDAY to "F",
-                        java.util.Calendar.SATURDAY to "S",
-                        java.util.Calendar.SUNDAY to "S"
-                    )
-
-                    daysList.forEach { (dayInt, label) ->
-                        val isSelected = alarm.daysOfWeek.contains(dayInt)
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(
-                                    color = if (isSelected) PrimaryPurple else Color.White.copy(alpha = 0.05f),
-                                    shape = RoundedCornerShape(20.dp)
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) SecondaryPink else Color.White.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(20.dp)
-                                )
-                                .testTag("day_toggle_$dayInt")
-                                .semantics { this.selected = isSelected }
-                                .clickable {
-                                    viewModel.toggleAlarmDay(dayInt)
-                                }
-                        ) {
-                            Text(
-                                text = label,
-                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = if (alarm.isActive) "Alarm is scheduled" else "Alarm is disabled",
-                    color = if (alarm.isActive) SecondaryPink else Color.White.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+        // Header
+        Column(modifier = Modifier.padding(top = Spacing.xxl, bottom = Spacing.md)) {
+            Text(
+                text = "AlarmAI",
+                style = MaterialTheme.typography.headlineLarge,
+                color = TextPrimary
+            )
+            Text(
+                text = "Your voice-powered morning assistant",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                modifier = Modifier.padding(top = Spacing.xs)
+            )
         }
 
-        // 1.5 Sound & Volume Settings Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
-                .glassmorphicCard(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = "Sound Settings",
-                        tint = PrimaryPurple,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Sound & Volume",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Volume slider
+        // Wake-up time
+        SectionCard(title = "Wake-Up Time", icon = Icons.Default.Alarm) {
+            val formattedTime = String.format("%02d:%02d", alarm.hour, alarm.minute)
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
-                    text = "Alarm Volume: $alarmVolume%",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Slider(
-                        value = alarmVolume.toFloat(),
-                        onValueChange = { viewModel.saveAlarmVolume(it.toInt()) },
-                        valueRange = 0f..100f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = PrimaryPurple,
-                            activeTrackColor = PrimaryPurple,
-                            inactiveTrackColor = Color.White.copy(alpha = 0.2f)
-                        ),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Ringtone selection
-                Text(
-                    text = "Ringtone",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = { launchRingtonePicker() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f)),
-                    shape = RoundedCornerShape(12.dp),
+                    text = formattedTime,
+                    style = MaterialTheme.typography.displayMedium,
+                    color = TextPrimary,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-                ) {
-                    val ringtoneTitle = getRingtoneTitle(context, alarmRingtoneUri)
-                    Text(
-                        text = ringtoneTitle,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        .clickable {
+                            TimePickerDialog(
+                                context,
+                                { _, hour, minute ->
+                                    viewModel.updateAlarmTime(hour, minute)
+                                },
+                                alarm.hour,
+                                alarm.minute,
+                                true
+                            ).show()
+                        }
+                        .padding(vertical = Spacing.xs)
+                )
+
+                Switch(
+                    checked = alarm.isActive,
+                    onCheckedChange = { viewModel.toggleAlarmActive(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = TextPrimary,
+                        checkedTrackColor = Accent,
+                        checkedBorderColor = Accent,
+                        uncheckedThumbColor = TextTertiary,
+                        uncheckedTrackColor = Surface2,
+                        uncheckedBorderColor = Line
+                    )
+                )
+            }
+
+            Spacer(Modifier.height(Spacing.lg))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                val daysList = listOf(
+                    java.util.Calendar.MONDAY to "M",
+                    java.util.Calendar.TUESDAY to "T",
+                    java.util.Calendar.WEDNESDAY to "W",
+                    java.util.Calendar.THURSDAY to "T",
+                    java.util.Calendar.FRIDAY to "F",
+                    java.util.Calendar.SATURDAY to "S",
+                    java.util.Calendar.SUNDAY to "S"
+                )
+
+                daysList.forEach { (dayInt, label) ->
+                    val isSelected = alarm.daysOfWeek.contains(dayInt)
+                    SelectablePill(
+                        text = label,
+                        selected = isSelected,
+                        onClick = { viewModel.toggleAlarmDay(dayInt) },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .testTag("day_toggle_$dayInt")
+                            .semantics { this.selected = isSelected }
                     )
                 }
             }
+
+            Spacer(Modifier.height(Spacing.md))
+
+            Text(
+                text = if (alarm.isActive) "Alarm is scheduled" else "Alarm is disabled",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (alarm.isActive) TextSecondary else TextTertiary
+            )
         }
 
-        // 1.75 Assistant Persona & Voice Settings Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
-                .glassmorphicCard(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+        // Sound
+        SectionCard(title = "Sound & Volume", icon = Icons.AutoMirrored.Filled.VolumeUp) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                FieldLabel("Alarm volume")
+                Text(
+                    text = "$alarmVolume%",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary
+                )
+            }
+            Slider(
+                value = alarmVolume.toFloat(),
+                onValueChange = { viewModel.saveAlarmVolume(it.toInt()) },
+                valueRange = 0f..100f,
+                colors = SliderDefaults.colors(
+                    thumbColor = Accent,
+                    activeTrackColor = Accent,
+                    inactiveTrackColor = Line
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(Spacing.md))
+
+            FieldLabel("Ringtone")
+            Spacer(Modifier.height(Spacing.sm))
+            SecondaryButton(
+                text = getRingtoneTitle(context, alarmRingtoneUri),
+                onClick = { launchRingtonePicker() },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Assistant persona
+        SectionCard(title = "Assistant Persona & Voice", icon = Icons.Default.Translate) {
+            FieldLabel("Assistant language")
+            Spacer(Modifier.height(Spacing.sm))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                val langs = listOf(
+                    "es" to "Español",
+                    "en" to "English"
+                )
+                langs.forEach { (langId, displayName) ->
+                    SelectablePill(
+                        text = displayName,
+                        selected = language == langId,
+                        onClick = { viewModel.saveLanguage(langId) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(ControlHeight)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(Spacing.lg))
+
+            FieldLabel("Text-to-speech voice")
+            Spacer(Modifier.height(Spacing.sm))
+            var expandedVoices by remember { mutableStateOf(false) }
+            Box(modifier = Modifier.fillMaxWidth()) {
+                SecondaryButton(
+                    text = if (voiceName.isEmpty()) {
+                        "System default"
+                    } else {
+                        voiceName.substringAfterLast(".").take(25)
+                    },
+                    onClick = { expandedVoices = true },
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Translate,
-                        contentDescription = "Voice & Language Settings",
-                        tint = PrimaryPurple,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Assistant Persona & Voice",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Assistant Language Selector
-                Text(
-                    text = "Assistant Language",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                DropdownMenu(
+                    expanded = expandedVoices,
+                    onDismissRequest = { expandedVoices = false },
+                    // material3 1.2.0 has no `containerColor` parameter yet, so the surface is
+                    // painted through the modifier.
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .background(Surface3)
                 ) {
-                    val langs = listOf(
-                        "es" to "Español",
-                        "en" to "English"
-                    )
-                    langs.forEach { (langId, displayName) ->
-                        val isSelected = language == langId
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
-                                .background(
-                                    color = if (isSelected) PrimaryPurple else Color.White.copy(alpha = 0.05f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isSelected) SecondaryPink else Color.White.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .clickable {
-                                    viewModel.saveLanguage(langId)
-                                }
-                        ) {
-                            Text(
-                                text = displayName,
-                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 14.sp
-                            )
+                    DropdownMenuItem(
+                        text = { Text("System default", color = TextPrimary) },
+                        onClick = {
+                            viewModel.saveVoiceName("")
+                            expandedVoices = false
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // TTS Voice Selector
-                Text(
-                    text = "Text-to-Speech Voice",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                var expandedVoices by remember { mutableStateOf(false) }
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Button(
-                        onClick = { expandedVoices = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f)),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-                    ) {
-                        val voiceDisplay = if (voiceName.isEmpty()) "System Default Voice" else voiceName.substringAfterLast(".").take(25)
-                        Text(
-                            text = voiceDisplay,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = expandedVoices,
-                        onDismissRequest = { expandedVoices = false },
-                        modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .background(Color(0xFF1E1B4B))
-                    ) {
+                    )
+                    availableVoices.forEach { voice ->
                         DropdownMenuItem(
-                            text = { Text("System Default Voice", color = Color.White) },
+                            text = { Text(voice.substringAfterLast("."), color = TextPrimary) },
                             onClick = {
-                                viewModel.saveVoiceName("")
+                                viewModel.saveVoiceName(voice)
                                 expandedVoices = false
                             }
                         )
-                        availableVoices.forEach { voice ->
-                            DropdownMenuItem(
-                                text = { Text(voice.substringAfterLast("."), color = Color.White) },
-                                onClick = {
-                                    viewModel.saveVoiceName(voice)
-                                    expandedVoices = false
-                                }
-                            )
-                        }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Tone Preference Textbox
-                Text(
-                    text = "Tone & Communication Style",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = tonePreference,
-                    onValueChange = { viewModel.saveTonePreference(it) },
-                    placeholder = { Text("e.g. Sarcastic and funny, warm and energetic, formal and brief...") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
-                        focusedLabelColor = PrimaryPurple,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.7f)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 3
-                )
-
             }
+
+            Spacer(Modifier.height(Spacing.lg))
+
+            FieldLabel("Tone & communication style")
+            Spacer(Modifier.height(Spacing.sm))
+            OutlinedTextField(
+                value = tonePreference,
+                onValueChange = { viewModel.saveTonePreference(it) },
+                placeholder = { Text("e.g. Sarcastic and funny, warm and energetic, formal and brief...") },
+                colors = appTextFieldColors(),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 3
+            )
         }
 
-        // 2. AI & API Configurations Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
-                .glassmorphicCard(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Key,
-                        contentDescription = "API Settings",
-                        tint = SecondaryPink,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Agent Credentials",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Gemini Key
-                OutlinedTextField(
-                    value = geminiKey,
-                    onValueChange = { viewModel.saveGeminiKey(it) },
-                    label = { Text("Gemini API Key") },
-                    placeholder = { Text("Enter your Gemini API key") },
-                    singleLine = true,
-                    visualTransformation = if (showGeminiPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { showGeminiPassword = !showGeminiPassword }) {
-                            Icon(
-                                imageVector = if (showGeminiPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = "Toggle Visibility",
-                                tint = Color.White.copy(alpha = 0.6f)
-                            )
-                        }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SecondaryPink.copy(alpha = 0.8f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedLabelColor = SecondaryPink,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedContainerColor = Color.White.copy(alpha = 0.04f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.02f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // AI Model
-                Text(
-                    text = "AI Model",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(top = 12.dp)
-                )
-                Text(
-                    text = "Falls back to the next model automatically if this one is busy",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
-                )
-
-                var expandedModels by remember { mutableStateOf(false) }
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Button(
-                        onClick = { expandedModels = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f)),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-                    ) {
-                        Text(
-                            text = GeminiModels.displayName(geminiModel),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
+        // Credentials
+        SectionCard(title = "Agent Credentials", icon = Icons.Default.Key) {
+            FieldLabel("Gemini API key")
+            Spacer(Modifier.height(Spacing.sm))
+            OutlinedTextField(
+                value = geminiKey,
+                onValueChange = { viewModel.saveGeminiKey(it) },
+                placeholder = { Text("Paste your Gemini API key") },
+                singleLine = true,
+                visualTransformation = if (showGeminiPassword) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
+                trailingIcon = {
+                    IconButton(onClick = { showGeminiPassword = !showGeminiPassword }) {
+                        Icon(
+                            imageVector = if (showGeminiPassword) {
+                                Icons.Default.VisibilityOff
+                            } else {
+                                Icons.Default.Visibility
+                            },
+                            contentDescription = "Toggle Visibility",
+                            tint = TextSecondary
                         )
                     }
+                },
+                colors = appTextFieldColors(),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                    DropdownMenu(
-                        expanded = expandedModels,
-                        onDismissRequest = { expandedModels = false },
-                        modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .background(Color(0xFF1E1B4B))
-                    ) {
-                        GeminiModels.CHAIN.forEach { model ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = GeminiModels.displayName(model),
-                                        color = Color.White,
-                                        fontWeight = if (model == geminiModel) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                onClick = {
-                                    viewModel.saveGeminiModel(model)
-                                    expandedModels = false
-                                }
-                            )
-                        }
+            Spacer(Modifier.height(Spacing.lg))
+
+            FieldLabel("AI model")
+            FieldHint(
+                text = "Falls back to the next model automatically if this one is busy",
+                modifier = Modifier.padding(top = 2.dp, bottom = Spacing.sm)
+            )
+            var expandedModels by remember { mutableStateOf(false) }
+            Box(modifier = Modifier.fillMaxWidth()) {
+                SecondaryButton(
+                    text = GeminiModels.displayName(geminiModel),
+                    onClick = { expandedModels = true },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                DropdownMenu(
+                    expanded = expandedModels,
+                    onDismissRequest = { expandedModels = false },
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .background(Surface3)
+                ) {
+                    GeminiModels.CHAIN.forEach { model ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = GeminiModels.displayName(model),
+                                    color = if (model == geminiModel) TextPrimary else TextSecondary
+                                )
+                            },
+                            onClick = {
+                                viewModel.saveGeminiModel(model)
+                                expandedModels = false
+                            }
+                        )
                     }
                 }
-
-                // News Topics
-                Text(
-                    text = "News Topics",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(top = 12.dp)
-                )
-                Text(
-                    text = "Headlines from Google News (no API key needed)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
-                )
-                OutlinedTextField(
-                    value = newsTopics,
-                    onValueChange = { viewModel.saveNewsTopics(it) },
-                    label = { Text("News Topics (Comma-separated)") },
-                    placeholder = { Text("technology, science, world") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SecondaryPink.copy(alpha = 0.8f),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
-                        focusedLabelColor = SecondaryPink,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedContainerColor = Color.White.copy(alpha = 0.04f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.02f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
+
+            Spacer(Modifier.height(Spacing.lg))
+
+            FieldLabel("News topics")
+            FieldHint(
+                text = "Headlines from Google News (no API key needed)",
+                modifier = Modifier.padding(top = 2.dp, bottom = Spacing.sm)
+            )
+            OutlinedTextField(
+                value = newsTopics,
+                onValueChange = { viewModel.saveNewsTopics(it) },
+                placeholder = { Text("technology, science, world") },
+                singleLine = true,
+                colors = appTextFieldColors(),
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
-        // 3. Manual testing / debug card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp)
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
-                .glassmorphicCard(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.07f))
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Test Tools",
-                        tint = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Developer Testing Tools",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = { triggerTestAlarm(context) },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Text("Test Alarm (Fires in 5 Seconds)", fontWeight = FontWeight.Bold, color = Color.White)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        val intent = Intent(context, com.alarmai.app.ui.alarm.AlarmActivity::class.java).apply {
-                            putExtra("is_direct_invoke", true)
-                        }
-                        context.startActivity(intent)
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Text("Talk to AI Assistant Now", fontWeight = FontWeight.Bold, color = Color.White)
-                }
-            }
+        // Developer tools
+        SectionCard(title = "Developer Testing Tools", icon = Icons.Default.PlayArrow) {
+            SecondaryButton(
+                text = "Test alarm (fires in 5 seconds)",
+                onClick = { triggerTestAlarm(context) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(Spacing.sm))
+            PrimaryButton(
+                text = "Talk to AI assistant now",
+                onClick = {
+                    val intent = Intent(context, com.alarmai.app.ui.alarm.AlarmActivity::class.java).apply {
+                        putExtra("is_direct_invoke", true)
+                    }
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
+
+        Spacer(Modifier.height(Spacing.xl))
     }
 }
 
@@ -914,12 +619,12 @@ private fun checkFullScreenIntentPermission(context: Context) {
 }
 
 fun getRingtoneTitle(context: Context, uriString: String): String {
-    if (uriString.isEmpty()) return "Default Alarm Sound"
+    if (uriString.isEmpty()) return "Default alarm sound"
     return try {
         val uri = Uri.parse(uriString)
         val ringtone = RingtoneManager.getRingtone(context, uri)
-        ringtone?.getTitle(context) ?: "Unknown Ringtone"
+        ringtone?.getTitle(context) ?: "Unknown ringtone"
     } catch (e: Exception) {
-        "Unknown Ringtone"
+        "Unknown ringtone"
     }
 }
