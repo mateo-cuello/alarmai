@@ -1,5 +1,6 @@
 package com.alarmai.app.data.repository
 
+import android.util.Log
 import com.google.gson.annotations.SerializedName
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -32,6 +33,11 @@ class WeatherRepository {
         .build()
         .create(OpenMeteoApi::class.java)
 
+    /**
+     * Returns a spoken-ready summary, or an empty string when unavailable. Blank means "skip the
+     * weather section"; returning the error text made the briefing say things like
+     * "Today's weather: Failed to retrieve weather, SocketTimeoutException" out loud.
+     */
     suspend fun getWeather(lat: Double, lon: Double): String {
         return try {
             val response = api.getForecast(lat, lon)
@@ -40,10 +46,11 @@ class WeatherRepository {
                 val description = getWeatherDescription(current.weathercode)
                 "Temperature: ${current.temperature}°C, Condition: $description, Wind speed: ${current.windspeed} km/h"
             } else {
-                "Weather data unavailable (empty response)."
+                ""
             }
         } catch (e: Exception) {
-            "Failed to retrieve weather: ${e.localizedMessage}"
+            Log.e("WeatherRepository", "Failed to retrieve weather: ${e.localizedMessage}")
+            ""
         }
     }
 

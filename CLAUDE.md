@@ -78,6 +78,10 @@ Two things about that enqueue are load-bearing:
 
 On dismiss, `AlarmViewModel.dismissAndTalk()` uses the cache only if it is under **30 minutes** old, calls `reconstructSession()` to replay that prompt/response pair as the Gemini history, clears the cache, and speaks immediately; otherwise it fetches everything on demand. It short-circuits when a `sessionJob` is already active — rotation and `retry()` can both re-enter it.
 
+**Repositories return a blank string when data is unavailable, never an error message.** `WeatherRepository`, `NewsRepository` and `CalendarRepository` log the failure and return `""`; `startSessionDetailed` drops blank sections when building the prompt. Returning the exception text made the briefing say "Today's weather: Failed to retrieve weather, SocketTimeoutException" out loud. Keep that contract when adding a data source.
+
+`BootReceiver` reschedules on `BOOT_COMPLETED`/`LOCKED_BOOT_COMPLETED` **and** on `MY_PACKAGE_REPLACED`, `TIME_SET`, `TIMEZONE_CHANGED` — an app update clears every pending `AlarmManager` entry, and a clock/timezone change leaves a scheduled alarm on the wrong wall time.
+
 `PreferencesManager` always resolves to `createDeviceProtectedStorageContext()`, so every preference is readable during Direct Boot — that is what lets `BootReceiver` (`directBootAware`, listening for both `BOOT_COMPLETED` and `LOCKED_BOOT_COMPLETED`) reschedule before first unlock. `PreAlarmReceiver` still bails out when `UserManagerCompat.isUserUnlocked` is false, since WorkManager needs the unlocked user.
 
 Every receiver, `AlarmActivity`, and `AlarmService` are declared `directBootAware="true"` in the manifest; any new boot-path component must be too. `AlarmService` is a `specialUse` foreground service with subtype `alarm`, playing the ringtone through `MediaPlayer` on `USAGE_ALARM`.

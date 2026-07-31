@@ -84,7 +84,10 @@ class CalendarRepository(private val context: Context) {
                 events.joinToString("\n")
             }
         } catch (e: Exception) {
-            "Unable to read calendar events: ${e.localizedMessage}"
+            // Blank, not the error text: the prompt builder omits empty sections, whereas an
+            // exception message here would end up spoken aloud in the briefing.
+            android.util.Log.e("CalendarRepository", "Unable to read calendar events: ${e.localizedMessage}")
+            ""
         }
     }
 }

@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pre-API-31 backup config; mirrors data_extraction_rules.xml.
+
+     AlarmAIPrefs holds the Gemini API key in plaintext. It currently lives in device-protected
+     storage (PreferencesManager always calls createDeviceProtectedStorageContext for Direct Boot),
+     i.e. the device_sharedpref domain, which is not included here and so is never backed up. The
+     exclude below is a guard for the credential-encrypted location, in case a future change ever
+     constructs PreferencesManager on a plain context. -->
 <full-backup-content>
     <include domain="sharedpref" path="."/>
+    <exclude domain="sharedpref" path="AlarmAIPrefs.xml"/>
 </full-backup-content>

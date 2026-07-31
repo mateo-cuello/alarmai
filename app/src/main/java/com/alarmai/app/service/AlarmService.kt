@@ -165,8 +165,14 @@ class AlarmService : Service() {
                 )
                 isLooping = true
                 setVolume(volumeFloat, volumeFloat)
-                prepare()
-                start()
+                // prepareAsync, not prepare: onStartCommand runs on the main thread and a
+                // content:// ringtone can block on I/O long enough to ANR the alarm.
+                setOnPreparedListener { it.start() }
+                setOnErrorListener { _, what, extra ->
+                    Log.e("AlarmService", "MediaPlayer error what=$what extra=$extra")
+                    false
+                }
+                prepareAsync()
             }
             Log.d("AlarmService", "Playing alarm sound with volume $volumePercent%")
         } catch (e: Exception) {

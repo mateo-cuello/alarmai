@@ -205,7 +205,14 @@ class AlarmServiceTest {
         verify(player).setDataSource(eq(service), any<android.net.Uri>())
         verify(player).setVolume(eq(0.8f), eq(0.8f))
         verify(player).setLooping(eq(true))
-        verify(player).prepare()
+        // Preparation is async so onStartCommand can't block the main thread; playback starts
+        // from the prepared callback rather than inline.
+        verify(player).prepareAsync()
+        verify(player, never()).prepare()
+
+        val listener = argumentCaptor<MediaPlayer.OnPreparedListener>()
+        verify(player).setOnPreparedListener(listener.capture())
+        listener.firstValue.onPrepared(player)
         verify(player).start()
     }
 
@@ -218,10 +225,10 @@ class AlarmServiceTest {
         doNothing().whenever(service).startForeground(any(), any())
         doNothing().whenever(service).startForeground(any(), any(), any())
 
-        // Recreate MediaPlayer construction to throw exception on prepare()
+        // Recreate MediaPlayer construction to throw exception on prepareAsync()
         mediaPlayerConstruction.close()
         mediaPlayerConstruction = Mockito.mockConstruction(MediaPlayer::class.java) { mockPlayer, _ ->
-            whenever(mockPlayer.prepare()).thenThrow(RuntimeException("Mock MediaPlayer Error"))
+            whenever(mockPlayer.prepareAsync()).thenThrow(RuntimeException("Mock MediaPlayer Error"))
         }
 
         service.onStartCommand(startIntent(), 0, 1)

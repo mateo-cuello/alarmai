@@ -160,23 +160,30 @@ class GeminiAgentManager @JvmOverloads constructor(
 
             val systemInstructionText = getSystemInstructionText(language, tone)
 
+            // A repository that failed returns a blank string, and a blank section is dropped
+            // rather than interpolated — otherwise the briefing reads the failure aloud.
+            val sections = if (language == "es") {
+                listOf("Clima" to weatherData, "Eventos de Calendario" to calendarData, "Noticias destacadas" to newsData)
+            } else {
+                listOf("Weather" to weatherData, "Calendar Events" to calendarData, "Top News Headlines" to newsData)
+            }
+            val dataBlock = sections
+                .filter { (_, value) -> value.isNotBlank() }
+                .joinToString("\n") { (label, value) -> "- $label: $value" }
+
             val initialPrompt = if (language == "es") {
                 """
                     Comienza el resumen matutino.
-                    - Clima: $weatherData
-                    - Eventos de Calendario: $calendarData
-                    - Noticias destacadas: $newsData
-                    
-                    Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume el clima, calendario, y los titulares de noticias provistos de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día. IMPORTANTE: No des un mensaje genérico de introducción antes de las noticias ni inventes datos. Da las noticias reales obtenidas de la lista directamente.
+                    $dataBlock
+
+                    Por favor, saluda al usuario cálidamente, menciona la hora (o deséale un buen día), resume el clima, calendario, y los titulares de noticias provistos de manera muy atractiva y concisa, y pregúntale cómo le gustaría empezar el día. IMPORTANTE: No des un mensaje genérico de introducción antes de las noticias ni inventes datos. Da las noticias reales obtenidas de la lista directamente. Si falta alguna sección arriba, simplemente omítela sin mencionar que no está disponible.
                 """.trimIndent()
             } else {
                 """
                     Start the morning briefing.
-                    - Weather: $weatherData
-                    - Calendar Events: $calendarData
-                    - Top News Headlines: $newsData
-                    
-                    Please greet the user warmly, state the time (or wish them a good morning), summarize the weather, calendar, and the provided news headlines in a highly engaging, concise way, and ask how they'd like to start their day. IMPORTANT: Do not give a generic introductory message before the news or invent facts. Deliver the real news obtained from the list directly.
+                    $dataBlock
+
+                    Please greet the user warmly, state the time (or wish them a good morning), summarize the weather, calendar, and the provided news headlines in a highly engaging, concise way, and ask how they'd like to start their day. IMPORTANT: Do not give a generic introductory message before the news or invent facts. Deliver the real news obtained from the list directly. If a section above is missing, simply skip it without mentioning that it was unavailable.
                 """.trimIndent()
             }
 

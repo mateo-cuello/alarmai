@@ -74,7 +74,9 @@
             android:exported="false"
             android:directBootAware="true" />
 
-        <!-- Broadcast Receiver for Boot Recovery -->
+        <!-- Broadcast Receiver for Boot / Update / Clock-Change Recovery.
+             MY_PACKAGE_REPLACED matters as much as BOOT_COMPLETED: an app update wipes every
+             scheduled AlarmManager entry, so without it the alarm is silently lost on upgrade. -->
         <receiver
             android:name=".receiver.BootReceiver"
             android:enabled="true"
@@ -83,6 +85,9 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
 
