@@ -56,3 +56,7 @@ __pycache__/
 # Native
 .externalNativeBuild
 .cxx
+# Worktrees de Claude Code. Cada uno es un repo anidado, así que un `git add -A` los
+# guarda como gitlink: una entrada sin contenido, que en cualquier clon aparece como un
+# directorio vacío.
+.claude/worktrees/
