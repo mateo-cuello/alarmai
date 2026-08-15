@@ -4,7 +4,7 @@ AlarmAI is a native Android morning assistant application that replaces standard
 
 When the alarm fires, it launches a full-screen window. Upon dismissal, the app aggregates weather, news headlines, and calendar events, and sends them to Gemini to generate a briefing. The briefing is read aloud using Android's Text-to-Speech (TTS) engine, and the app listens for spoken follow-up responses using Speech-to-Text (STT) for hands-free dialogue.
 
-The default model is `gemini-3.6-flash`, selectable in settings. If the chosen model is rate-limited or unavailable, the app automatically falls back down a chain of alternatives rather than failing the briefing.
+The default model is `gemini-3.7-flash`, selectable in settings. If the chosen model is rate-limited or unavailable, the app automatically falls back down a chain of alternatives rather than failing the briefing.
 
 ---
 

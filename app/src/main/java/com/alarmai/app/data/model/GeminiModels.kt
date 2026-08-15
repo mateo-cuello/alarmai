@@ -12,9 +12,10 @@ package com.alarmai.app.data.model
  */
 object GeminiModels {
 
-    const val DEFAULT = "gemini-3.6-flash"
+    const val DEFAULT = "gemini-3.7-flash"
 
     val CHAIN = listOf(
+        "gemini-3.7-flash",
         "gemini-3.6-flash",
         "gemini-3.5-flash",
         "gemini-3.1-flash-lite",
@@ -26,7 +27,7 @@ object GeminiModels {
     /** True when [model] is one this build knows how to fall back from. */
     fun isKnown(model: String): Boolean = model in CHAIN
 
-    /** "gemini-3.6-flash" -> "Gemini 3.6 Flash", for display in the settings picker. */
+    /** "gemini-3.7-flash" -> "Gemini 3.7 Flash", for display in the settings picker. */
     fun displayName(model: String): String =
         model.removePrefix("gemini-")
             .split("-")

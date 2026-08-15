@@ -133,11 +133,13 @@ class GeminiAgentManagerTest {
 
         val bodies = mutableListOf<String>()
         var call = 0
+        // 1 = startSession (ok), then the failing turn walks the whole chain, then recovery.
+        val lastFailingCall = 1 + GeminiModels.CHAIN.size
         val manager = managerWith { _, _, body ->
             bodies += body
             call++
-            // 1 = startSession (ok), 2..7 = failing turn walking the chain, 8 = recovery
-            if (call == 1 || call > 7) textResponse("ok") else throw Exception("HTTP 503")
+            if (call == 1 || call > lastFailingCall) textResponse("ok")
+            else throw Exception("HTTP 503")
         }
 
         manager.startSession("key", "sunny", "news", "calendar")
